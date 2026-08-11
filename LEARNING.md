@@ -21,12 +21,17 @@ The repository currently contains:
 - Phase 2 bounded static inspection, evidence records, candidate-command detection,
   redaction, and human/JSON inspection output; and
 - Phase 3 agent registry, validated primary/secondary selection, safe session manifests,
-  changed-file reinspection, and manual/JSON planning handoff.
+  changed-file reinspection, and manual/JSON planning handoff; and
+- Phase 4 evidence-aware project grill, decision frontier, contradiction handling,
+  shared-understanding confirmation, and safe approved-specification primitives; and
+- Phase 5 canonical document generation, conflict classification, preview summaries,
+  explicit per-file reconciliation, atomic approved application, and idempotent reruns.
 
-The package is not published and the full setup workflow is not implemented yet.
-Planning interviews, document generation, adapters, and final validation remain planned
-work. Commands and generated-file examples in this
-guide describe the approved design unless explicitly identified as implemented.
+The package is not published and the full setup workflow is not implemented yet. The
+active coding agent still conducts the interview, and public CLI orchestration of an
+approved specification, adapters, and final validation remain planned work. Commands
+and generated-file examples in this guide describe the approved design unless explicitly
+identified as implemented.
 
 ### What the project will become
 
@@ -813,15 +818,21 @@ transitions, changed-file reinspection, conversation handoff, and interruption/r
 tests are implemented. Compatibility remains unverified until the later agent behavior
 evaluation phase.
 
-### Phase 4: project grill
+### Phase 4: project grill — completed
 
-Define the decision tree, frontier questioning, contradiction handling,
-shared-understanding approval, and machine-readable approved specification.
+The decision tree, complete-round frontier questioning, contradiction handling,
+shared-understanding approval, and machine-readable approved-specification primitives
+are implemented. The active coding agent uses the handoff to conduct the conversation;
+raw transcripts are intentionally not persisted.
 
-### Phase 5: document generation
+### Phase 5: document generation — completed
 
-Generate and reconcile `AGENTS.md`, `PLAN.md`, and `TODO.md`; classify conflicts;
-preview changes; and apply only approved content.
+Canonical `AGENTS.md`, `PLAN.md`, and `TODO.md` generators now synthesize approved
+decisions and observed evidence. The internal generation path classifies missing,
+owned-current, owned-modified, compatible-existing, merge-required, and blocked
+artifacts; produces human/JSON-safe preview summaries; requires explicit per-file
+preserve or reconciled-content decisions for conflicts; and atomically applies only
+approved changes. The public CLI does not yet accept an approved specification.
 
 ### Phase 6: agent adapters and skill
 

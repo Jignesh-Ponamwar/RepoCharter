@@ -23,12 +23,16 @@ provisional and the intended public command below is not yet available from npm:
 npx repo-charter init
 ```
 
-**Phases 1, 2, and 3 are implemented.** The current CLI can safely inspect a
+**Phases 1 through 5 are implemented.** The current CLI can safely inspect a
 repository, initialize and validate ownership state, select one primary and optional
 secondary agents, persist a safe resumable session, and emit bounded human or JSON
-evidence without executing project code. It does **not** yet run planning interviews,
-generate `AGENTS.md`/`PLAN.md`/`TODO.md`, create agent adapters, or claim support for
-any coding agent.
+evidence without executing project code. Its handoff gives the active coding agent a
+dependency-aware project grill, contradiction checks, a shared-understanding gate, and
+approved-specification primitives. Internal generation APIs now produce a canonical
+`AGENTS.md`, `PLAN.md`, and `TODO.md`, preview each conflict classification, and apply
+only explicit approvals. The public CLI intentionally does not yet accept an approved
+specification or generate files directly; that orchestration follows with adapters and
+final validation. No coding-agent compatibility claim is made.
 
 The approved product contract is in [PLAN.md](./PLAN.md); the verified implementation
 status and next task are in [TODO.md](./TODO.md).
@@ -76,7 +80,7 @@ Three authorities remain separate throughout the workflow:
 
 ## What is implemented today
 
-Phases 1, 2, and 3 provide a packable Node.js 22+ ESM CLI with no runtime dependencies.
+Phases 1 through 5 provide a packable Node.js 22+ ESM CLI with no runtime dependencies.
 
 ### Local development commands
 
@@ -107,7 +111,7 @@ node bin/repo-charter.js --help
 node bin/repo-charter.js init ../target-repository --dry-run --primary-agent codex
 
 # Inspect a target, record selected agents, create safe ownership/session state,
-# and print the exact planning handoff.
+# and print the exact planning handoff with its first decision frontier.
 node bin/repo-charter.js init ../target-repository --primary-agent codex --agents claude-code
 
 # Validate local state and emit read-only inspection evidence.
@@ -144,8 +148,11 @@ as unchanged.
 
 `--dry-run` calculates ownership and session creation without writing either file.
 `check` is read-only. `resume` reloads a valid incomplete session, reinspects changed
-files, and prints the next planning handoff. `--non-interactive` is intentionally
-rejected until a later phase can supply every required planning decision.
+files, and prints the next planning handoff. The handoff asks the active agent to work
+its complete unblocked decision frontier in rounds, recommend answers, surface
+contradictions, and require explicit shared-understanding confirmation before an
+approved setup specification exists. `--non-interactive` remains rejected until a later
+phase can supply every required planning decision.
 
 ## Safety guarantees
 
@@ -166,8 +173,11 @@ The implemented foundation, inspection, and session phases verify atomic-write c
 dry-run zero writes, conflict preservation, dirty-worktree preservation, bounded
 discovery, `.gitignore` handling, hard protected-content exclusions, redaction,
 validated selected-agent sessions, corrupt-manifest rejection, changed-file
-reinspection, and an unchanged second initialization. Document generation and agent
-behavior validation are planned later phases.
+reinspection, an unchanged second initialization, generated-document context budget,
+conflict classification, explicit preview approval, reconciliation, and an unchanged
+second document application. Public document-generation orchestration and agent behavior
+validation are planned later phases. The grill framework persists only confirmed
+structured decisions in an approved specification; it never persists raw chat.
 
 ## Planned generated environment
 
@@ -246,10 +256,11 @@ The product is intentionally built in safety-first phases:
    detection, redaction, protected-content exclusions, and human/JSON evidence output.
 3. **Sessions and handoff** — completed: validated agent selection, safe resumable
    state, changed-file reinspection, and manual/JSON planning handoff.
-4. **Project grill** — evidence-aware decision tree, contradiction handling, developer
-   approval, and an approved setup specification.
-5. **Generation and reconciliation** — project-specific documents, conflict preview,
-   approval, and idempotent application.
+4. **Project grill** — completed: evidence-aware decision tree, contradiction
+   handling, explicit shared-understanding confirmation, and safe approved-specification
+   primitives.
+5. **Generation and reconciliation** — completed: project-specific documents, conflict
+   preview, explicit approval, reconciliation, and idempotent application.
 6. **Adapters and skill** — verified native instruction surfaces and fresh-agent
    behavior evaluations.
 7. **Validation and handoff** — contract checks, stale-fact detection, output/exit-code

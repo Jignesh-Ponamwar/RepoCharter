@@ -130,9 +130,9 @@ one canonical project contract rather than duplicating per-agent instructions.
 - [x] **1.8 Verify the packed CLI artifact**: create an npm pack artifact, install it
       into an isolated fixture, and run its help, dry-run, and base initialization
       paths using Node.js 22+. Verified the isolated packed artifact under Node
-      v22.15.0; after the Phase 3 session modules were added,
-      `npm pack --dry-run --json` was reverified with the expected 20 packaged files,
-      including `README.md` and all runtime inspection/session modules.
+      v22.15.0; after the Phase 5 generation modules were added,
+      `npm pack --dry-run --json` was reverified with the expected 27 packaged files,
+      including `README.md` and all runtime inspection/session/grill/generation modules.
 
 **Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 11 Node
 tests. The isolated packed artifact ran help, dry-run, and base initialization; conflict
@@ -310,30 +310,38 @@ bodies, or secrets.
 > Goal: Give the active coding agent a rigorous, adaptive process for learning project
 > intent and producing an explicitly approved generation specification.
 
-- [ ] **4.1 Define the decision tree**: cover project goals, users, current pain, MVP
+- [x] **4.1 Define the decision tree**: cover project goals, users, current pain, MVP
       boundary, workflows, architecture, data, security, integrations, operations,
       quality, future scope, risks, dependencies, assumptions, and open questions.
-- [ ] **4.2 Define evidence-aware questioning rules**: prohibit asking developers for
+      Added the dependency-aware tree in `src/grill/decision-tree.js`.
+- [x] **4.2 Define evidence-aware questioning rules**: prohibit asking developers for
       repository facts already available, ask the complete currently unblocked
       decision frontier in rounds, recommend answers, and follow dependencies rather
-      than using a fixed questionnaire.
-- [ ] **4.3 Define contradiction and ambiguity handling**: require agents to challenge
+      than using a fixed questionnaire. The handoff now formats every frontier question
+      with a recommendation and skips current-state questions when observed facts exist.
+- [x] **4.3 Define contradiction and ambiguity handling**: require agents to challenge
       incompatible goals, unverifiable completion claims, vague success criteria, and
-      future requirements that alter present architecture.
-- [ ] **4.4 Define the shared-understanding gate**: summarize every settled branch,
+      future requirements that alter present architecture. Added explicit conflict,
+      vagueness, completion-claim, and future-architecture findings.
+- [x] **4.4 Define the shared-understanding gate**: summarize every settled branch,
       expose remaining unknowns, and require explicit developer confirmation before
-      generating an applicable specification.
-- [ ] **4.5 Define the approved setup specification**: create a versioned machine-
+      generating an applicable specification. `createSharedUnderstanding` cannot be
+      confirmed while decisions or error findings remain, and requires `true` approval.
+- [x] **4.5 Define the approved setup specification**: create a versioned machine-
       readable contract for confirmed decisions, selected verification depth, proposed
       artifacts, conflict decisions, and developer approval without storing the raw
-      interview.
-- [ ] **4.6 Add grill workflow evaluations**: test greenfield, existing undocumented,
+      interview. Added safe specification creation/serialization with forbidden-field
+      and sensitive-value rejection.
+- [x] **4.6 Add grill workflow evaluations**: test greenfield, existing undocumented,
       conflicting-documentation, and future-scope scenarios for unnecessary questions,
-      missed branches, premature completion, and unapproved assumptions.
+      missed branches, premature completion, and unapproved assumptions. Added five
+      grill tests covering those scenarios, complete frontiers, confirmation, and safe
+      specifications.
 
-**Phase gate: PENDING**: representative sessions must reach explicit shared
-understanding, ask only non-inferable decisions, expose contradictions, retain no raw
-transcript, and emit a complete approved specification.
+**Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 27 Node
+tests. Verified greenfield/existing-project frontiers, contradiction and future-scope
+blocking, explicit confirmation, transcript rejection, safe approved specifications,
+and a live JSON handoff containing the current grill frontier.
 
 ---
 
@@ -342,39 +350,49 @@ transcript, and emit a complete approved specification.
 > Goal: Generate project-specific collaboration and planning documents while
 > preserving project-owned content and reporting every conflict.
 
-- [ ] **5.1 Create the canonical `AGENTS.md` generator**: synthesize project purpose,
+- [x] **5.1 Create the canonical `AGENTS.md` generator**: synthesize project purpose,
       repository map, architecture, commands, invariants, conventions, plan/TODO
       protocol, multi-agent ownership and handoffs, verification rules, limitations,
-      and open questions from confirmed evidence; omit irrelevant boilerplate.
-- [ ] **5.2 Enforce the instruction context budget**: target a focused 150-250 line
+      and open questions from confirmed evidence; omit irrelevant boilerplate. Added
+      `src/generation/documents.js` with a decision/evidence-specific root contract.
+- [x] **5.2 Enforce the instruction context budget**: target a focused 150-250 line
       root contract, retain immediate commands and invariants, and link detailed
-      product or reference material without weakening required behavior.
-- [ ] **5.3 Create the evidence-based `PLAN.md` generator**: record approved durable
+      product or reference material without weakening required behavior. Verified the
+      smallest generated contract is 150 lines; fixture output remains within 150–250.
+- [x] **5.3 Create the evidence-based `PLAN.md` generator**: record approved durable
       decisions, rationale, architecture, workflows, correctness, interfaces,
       operations, exclusions, ordered gates, assumptions, and open questions while
-      distinguishing intended from implemented behavior.
-- [ ] **5.4 Create the traceable `TODO.md` generator**: derive ordered phases and
+      distinguishing intended from implemented behavior. Generated plans identify
+      observed evidence separately from approved intended behavior.
+- [x] **5.4 Create the traceable `TODO.md` generator**: derive ordered phases and
       implementation-grade tasks from the plan, create observable phase gates, and
-      identify the first actionable task.
-- [ ] **5.5 Reconstruct verified baselines carefully**: group existing capabilities
+      identify the first actionable task. Added an observed-only verified baseline and
+      ordered MVP, security/integration, and release-verification phases.
+- [x] **5.5 Reconstruct verified baselines carefully**: group existing capabilities
       into concise completed baseline items only when supported by observed checks or
-      explicit developer confirmation; never fabricate historical sequencing.
-- [ ] **5.6 Implement conflict classification**: classify every artifact as missing,
+      explicit developer confirmation; never fabricate historical sequencing. Baseline
+      command entries state static observation and never claim execution.
+- [x] **5.6 Implement conflict classification**: classify every artifact as missing,
       owned-current, owned-modified, compatible-existing, merge-required, or blocked
-      and attach evidence and permitted actions.
-- [ ] **5.7 Implement preview and approval**: present one complete proposed change set,
+      and attach evidence and permitted actions. Added ownership-hash-aware preview
+      classification in `src/generation/reconciliation.js`.
+- [x] **5.7 Implement preview and approval**: present one complete proposed change set,
       allow safe files to be approved together, and require a per-file decision for
-      unresolved reconciliations.
-- [ ] **5.8 Implement approved application**: atomically create or reconcile only
+      unresolved reconciliations. Added complete preview objects plus human and
+      JSON-serializable summaries; conflicts remain pending until preserve or reconcile.
+- [x] **5.8 Implement approved application**: atomically create or reconcile only
       approved content, use managed sections only where suitable, and never blindly
-      replace project-owned `PLAN.md` or `TODO.md`.
-- [ ] **5.9 Add generation and conflict fixtures**: verify empty, compatible,
+      replace project-owned `PLAN.md` or `TODO.md`. Every write uses atomic paths;
+      project-owned conflicts require explicit reconciled content or preservation.
+- [x] **5.9 Add generation and conflict fixtures**: verify empty, compatible,
       tool-modified, user-modified, contradictory, blocked, and unchanged-second-run
-      scenarios with human and JSON summaries.
+      scenarios with human and JSON summaries. Added generation fixtures/tests covering
+      all classifications, explicit reconciliation, preservation, and idempotent reruns.
 
-**Phase gate: PENDING**: approved fixtures must produce detailed project-specific
-documents, preserve all unapproved content, report every conflict, maintain
-plan-to-TODO traceability, and produce no diff on a second unchanged application.
+**Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 30 Node
+tests. Verified project-specific document output, 150-line minimum AGENTS budget,
+traceable plan/TODO output, all conflict classifications, human/JSON preview summaries,
+explicit conflict decisions, atomic approved writes, and no changes on a second run.
 
 ---
 
