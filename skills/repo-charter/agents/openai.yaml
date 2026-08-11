@@ -1,0 +1,5 @@
+interface:
+  display_name: "RepoCharter"
+  short_description: "Prepare an evidence-backed agent-ready repository"
+policy:
+  allow_implicit_invocation: true

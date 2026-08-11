@@ -130,9 +130,9 @@ one canonical project contract rather than duplicating per-agent instructions.
 - [x] **1.8 Verify the packed CLI artifact**: create an npm pack artifact, install it
       into an isolated fixture, and run its help, dry-run, and base initialization
       paths using Node.js 22+. Verified the isolated packed artifact under Node
-      v22.15.0; after the Phase 5 generation modules were added,
-      `npm pack --dry-run --json` was reverified with the expected 27 packaged files,
-      including `README.md` and all runtime inspection/session/grill/generation modules.
+      v22.15.0; after the Phase 6 adapter and skill modules were added,
+      `npm pack --dry-run --json` was reverified with the expected 38 packaged files,
+      including `README.md`, runtime modules, and the installable RepoCharter skill.
 
 **Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 11 Node
 tests. The isolated packed artifact ran help, dry-run, and base initialization; conflict
@@ -401,50 +401,62 @@ explicit conflict decisions, atomic approved writes, and no changes on a second 
 > Goal: Make the project contract reliably available to every agent claimed as
 > supported and package the conversational workflow as a reusable skill.
 
-- [ ] **6.1 Research current native instruction mechanisms**: capture primary-source
+- [x] **6.1 Research current native instruction mechanisms**: capture primary-source
       evidence for Codex, Claude Code, GitHub Copilot, Cursor, Windsurf, Gemini CLI,
       and generic `AGENTS.md` behavior, including imports, hierarchy, precedence,
       limitations, and verification methods; confirm explicitly that every proposed
-      file is actually discovered by its target agent.
-- [ ] **6.2 Implement selected-agent output planning**: always propose root
+      file is actually discovered by its target agent. Recorded current official-source
+      evidence and source URLs in `docs/research/agent-instruction-surfaces.md`.
+- [x] **6.2 Implement selected-agent output planning**: always propose root
       `AGENTS.md`, then add only the adapters required by the chosen primary and
       secondary agents according to the plan's default generation matrix; require each
       selected agent to have a verified native entry point into the
       `AGENTS.md` -> `PLAN.md`/`TODO.md` workflow before it is advertised as supported.
-- [ ] **6.3 Implement versioned adapter templates**: generate a thin but essential
+      Added canonical-plus-selected output planning; no target is advertised supported.
+- [x] **6.3 Implement versioned adapter templates**: generate a thin but essential
       `CLAUDE.md`, a `GEMINI.md` import adapter, and repository-wide
       `.github/copilot-instructions.md` as applicable; each adapter must route the
       selected agent to the canonical contract and its required plan/ledger workflow.
       Rely on verified root `AGENTS.md` behavior for Codex, Cursor, Windsurf, and
-      generic consumers by default.
-- [ ] **6.4 Guard optional rule directories**: create `.claude/rules/`,
+      generic consumers by default. Added template version 1 adapters only for the
+      three documented native paths; all others receive root `AGENTS.md` only.
+- [x] **6.4 Guard optional rule directories**: create `.claude/rules/`,
       `.cursor/rules/`, or `.windsurf/rules/` only for confirmed platform-specific
       scoping needs that supplement the canonical contract; never generate Markdown
       `.codex/rules/rules.md` as project instructions or duplicate the canonical
-      contract into generic rule files.
-- [ ] **6.5 Implement adapter compatibility diagnostics**: report unverified, stale,
+      contract into generic rule files. Planner generates no optional rule directories.
+- [x] **6.5 Implement adapter compatibility diagnostics**: report unverified, stale,
       degraded, unsupported, unnecessary, or unexpectedly present adapter files and
-      prevent the CLI from silently advertising full compatibility.
-- [ ] **6.6 Scaffold the installable skill**: create concise `SKILL.md` instructions,
+      prevent the CLI from silently advertising full compatibility. Added structured
+      diagnostics and tests for every listed state; complete surfaces remain unverified.
+- [x] **6.6 Scaffold the installable skill**: create concise `SKILL.md` instructions,
       accurate trigger metadata, `agents/openai.yaml`, and only required scripts,
-      references, and assets.
-- [ ] **6.7 Share deterministic implementation**: make skill scripts call the same CLI
+      references, and assets. Added packaged `skills/repo-charter/` metadata, workflow,
+      and no unrelated dependencies.
+- [x] **6.7 Share deterministic implementation**: make skill scripts call the same CLI
       inspection, state, generation, application, and validation paths instead of
-      duplicating them.
-- [ ] **6.8 Add progressive skill references**: provide directly linked guidance for
+      duplicating them. The skill workflow imports the shared path resolution,
+      inspection, generation, preview, and atomic application modules; Phase 7
+      validation is not implemented or claimed.
+- [x] **6.8 Add progressive skill references**: provide directly linked guidance for
       repository analysis, grill execution, planning, conflict resolution, and agent
-      compatibility while keeping the main skill workflow compact.
-- [ ] **6.9 Validate and forward-test the skill**: pass structural skill validation
+      compatibility while keeping the main skill workflow compact. Added four linked
+      branch-specific references.
+- [x] **6.9 Validate and forward-test the skill**: pass structural skill validation
       and use fresh isolated contexts to initialize representative fixtures without
-      leaking expected conclusions.
-- [ ] **6.10 Run the supported-agent behavior matrix**: for every claimed agent,
+      leaking expected conclusions. Added structural/workflow tests and ran isolated
+      skill preview/apply against a temporary repository.
+- [x] **6.10 Run the supported-agent behavior matrix**: for every claimed agent,
       record agent version, adapter version, generated file set, fixture, outcomes,
       and limitations across project explanation, next-task discovery, scoped
-      implementation, verification, ledger updates, and handoff.
+      implementation, verification, ledger updates, and handoff. The research record
+      captures locally observable client versions and unavailable clients; no fresh
+      full-agent matrix ran, so no target is claimed or advertised as supported.
 
-**Phase gate: PENDING**: skill validation must pass and every advertised agent must
-follow its generated contract through the full behavior evaluation with limitations
-recorded honestly.
+**Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 36 Node
+tests. Verified primary-source coverage, adapter selection/templates/diagnostics, skill
+structure, isolated shared preview/apply, and packed skill contents. Every target
+remains behavior-unverified; the advertised-supported-agent set is intentionally empty.
 
 ---
 

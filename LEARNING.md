@@ -25,13 +25,16 @@ The repository currently contains:
 - Phase 4 evidence-aware project grill, decision frontier, contradiction handling,
   shared-understanding confirmation, and safe approved-specification primitives; and
 - Phase 5 canonical document generation, conflict classification, preview summaries,
-  explicit per-file reconciliation, atomic approved application, and idempotent reruns.
+  explicit per-file reconciliation, atomic approved application, and idempotent reruns;
+  and
+- Phase 6 primary-source native-surface research, selected-agent adapter planning,
+  compatibility diagnostics, and the installable RepoCharter workflow skill.
 
 The package is not published and the full setup workflow is not implemented yet. The
 active coding agent still conducts the interview, and public CLI orchestration of an
-approved specification, adapters, and final validation remain planned work. Commands
-and generated-file examples in this guide describe the approved design unless explicitly
-identified as implemented.
+approved specification and final validation remain planned work. Agent compatibility is
+not behavior-verified for any target. Commands and generated-file examples in this
+guide describe the approved design unless explicitly identified as implemented.
 
 ### What the project will become
 
@@ -834,11 +837,16 @@ artifacts; produces human/JSON-safe preview summaries; requires explicit per-fil
 preserve or reconciled-content decisions for conflicts; and atomically applies only
 approved changes. The public CLI does not yet accept an approved specification.
 
-### Phase 6: agent adapters and skill
+### Phase 6: agent adapters and skill — completed
 
-Verify every native instruction mechanism, implement selected-agent output planning,
-create minimal adapters, guard optional rule directories, package the skill, and run
-the supported-agent behavior matrix.
+Primary-source research records documented entry surfaces for all seven target agents.
+Selected-agent planning generates only `CLAUDE.md`, `GEMINI.md`, or
+`.github/copilot-instructions.md` when required; Codex, Cursor, Windsurf, and generic
+selections use root `AGENTS.md`. Compatibility diagnostics distinguish unverified,
+stale, degraded, unsupported, unnecessary, and unexpected states. The packaged skill
+calls the shared deterministic paths and progressively discloses analysis, grill,
+reconciliation, and compatibility guidance. No target is behavior-verified or
+advertised as supported until the fresh-agent matrix is fully observed.
 
 ### Phase 7: validation and handoff
 

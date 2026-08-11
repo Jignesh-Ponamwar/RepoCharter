@@ -23,16 +23,17 @@ provisional and the intended public command below is not yet available from npm:
 npx repo-charter init
 ```
 
-**Phases 1 through 5 are implemented.** The current CLI can safely inspect a
+**Phases 1 through 6 are implemented.** The current CLI can safely inspect a
 repository, initialize and validate ownership state, select one primary and optional
 secondary agents, persist a safe resumable session, and emit bounded human or JSON
 evidence without executing project code. Its handoff gives the active coding agent a
 dependency-aware project grill, contradiction checks, a shared-understanding gate, and
-approved-specification primitives. Internal generation APIs now produce a canonical
+approved-specification primitives. Internal generation APIs produce a canonical
 `AGENTS.md`, `PLAN.md`, and `TODO.md`, preview each conflict classification, and apply
-only explicit approvals. The public CLI intentionally does not yet accept an approved
-specification or generate files directly; that orchestration follows with adapters and
-final validation. No coding-agent compatibility claim is made.
+only explicit approvals. The packaged RepoCharter skill calls those same deterministic
+paths and selected-agent planning produces only documented thin adapters. The public
+CLI intentionally does not yet accept an approved specification or generate files
+directly, and no coding-agent compatibility claim is made.
 
 The approved product contract is in [PLAN.md](./PLAN.md); the verified implementation
 status and next task are in [TODO.md](./TODO.md).
@@ -80,7 +81,7 @@ Three authorities remain separate throughout the workflow:
 
 ## What is implemented today
 
-Phases 1 through 5 provide a packable Node.js 22+ ESM CLI with no runtime dependencies.
+Phases 1 through 6 provide a packable Node.js 22+ ESM CLI and installable skill with no runtime dependencies.
 
 ### Local development commands
 
@@ -175,9 +176,11 @@ discovery, `.gitignore` handling, hard protected-content exclusions, redaction,
 validated selected-agent sessions, corrupt-manifest rejection, changed-file
 reinspection, an unchanged second initialization, generated-document context budget,
 conflict classification, explicit preview approval, reconciliation, and an unchanged
-second document application. Public document-generation orchestration and agent behavior
-validation are planned later phases. The grill framework persists only confirmed
-structured decisions in an approved specification; it never persists raw chat.
+second document application. Public document-generation orchestration and final
+validation are planned later phases. Adapter discovery is documented from primary
+sources, but every target agent remains behavior-unverified. The grill framework
+persists only confirmed structured decisions in an approved specification; it never
+persists raw chat.
 
 ## Planned generated environment
 
@@ -261,8 +264,9 @@ The product is intentionally built in safety-first phases:
    primitives.
 5. **Generation and reconciliation** — completed: project-specific documents, conflict
    preview, explicit approval, reconciliation, and idempotent application.
-6. **Adapters and skill** — verified native instruction surfaces and fresh-agent
-   behavior evaluations.
+6. **Adapters and skill** — completed: documented native entry planning, thin adapter
+   templates, compatibility diagnostics, and an installable workflow skill. Fresh-agent
+   behavior evaluation remains required before any support claim.
 7. **Validation and handoff** — contract checks, stale-fact detection, output/exit-code
    behavior, and exact final reporting.
 8. **Preview distribution** — user documentation, cross-platform clean installation,
