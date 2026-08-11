@@ -130,8 +130,8 @@ one canonical project contract rather than duplicating per-agent instructions.
 - [x] **1.8 Verify the packed CLI artifact**: create an npm pack artifact, install it
       into an isolated fixture, and run its help, dry-run, and base initialization
       paths using Node.js 22+. Verified the isolated packed artifact under Node
-      v22.15.0; after the Phase 6 adapter and skill modules were added,
-      `npm pack --dry-run --json` was reverified with the expected 38 packaged files,
+      v22.15.0; after the Phase 7 validation module was added,
+      `npm pack --dry-run --json` was reverified with the expected 39 packaged files,
       including `README.md`, runtime modules, and the installable RepoCharter skill.
 
 **Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 11 Node
@@ -465,29 +465,37 @@ remains behavior-unverified; the advertised-supported-agent set is intentionally
 > Goal: Detect broken or stale setups and leave the developer with an exact, actionable
 > result after initialization.
 
-- [ ] **7.1 Validate manifest and ownership integrity**: check schema versions, stage
+- [x] **7.1 Validate manifest and ownership integrity**: check schema versions, stage
       consistency, ownership hashes, managed sections, template versions, and missing
-      or unexpectedly modified artifacts.
-- [ ] **7.2 Validate agent entry points**: check selected native files, canonical
-      routing, compatibility status, and platform limitations.
-- [ ] **7.3 Validate generated document contracts**: check `AGENTS.md` completeness,
+      or unexpectedly modified artifacts. `check` now validates manifest state and
+      recorded ownership hashes against live managed files without writing.
+- [x] **7.2 Validate agent entry points**: check selected native files, canonical
+      routing, compatibility status, and platform limitations. Added selected-surface
+      diagnostics; documented entry points remain warning-level `unverified`.
+- [x] **7.3 Validate generated document contracts**: check `AGENTS.md` completeness,
       `PLAN.md` durable concepts, `TODO.md` task quality, phase gates, plan traceability,
-      blockers, and unsupported completion claims.
-- [ ] **7.4 Detect stale repository facts**: compare documented paths and commands to
+      blockers, and unsupported completion claims. Added contract-section, task, and
+      phase-gate checks, with incomplete pre-application setup reported as warnings.
+- [x] **7.4 Detect stale repository facts**: compare documented paths and commands to
       safe current inspection evidence and distinguish deterministic errors from
-      advisory drift warnings.
-- [ ] **7.5 Integrate approved repository checks**: record commands actually run,
+      advisory drift warnings. Added warning-only comparisons for documented command
+      and repository-path references absent from current safe inspection evidence.
+- [x] **7.5 Integrate approved repository checks**: record commands actually run,
       exit statuses, relevant redacted output, and verification depth without
-      converting skipped checks into successes.
-- [ ] **7.6 Produce the final change report**: print every created, modified, unchanged,
+      converting skipped checks into successes. Added safe manifest `observedChecks`;
+      passed, failed, and skipped results remain distinct and failed checks are errors.
+- [x] **7.6 Produce the final change report**: print every created, modified, unchanged,
       skipped, and conflicted artifact; observed checks; warnings; blockers; and the
-      first actionable unchecked task.
-- [ ] **7.7 Verify exit-code and output contracts**: cover clean, warning, invalid,
-      blocked, and partially completed states in both human and JSON modes.
+      first actionable unchecked task. `check` now returns exact artifact status,
+      observed-check, blocker, warning, and next-task report data in human and JSON.
+- [x] **7.7 Verify exit-code and output contracts**: cover clean, warning, invalid,
+      blocked, and partially completed states in both human and JSON modes. Added
+      validation tests for read-only warning, ownership-invalid, failed-check, stale,
+      partial, human, and JSON results.
 
-**Phase gate: PENDING**: `check` must distinguish failures from advice, avoid writes,
-report observed evidence faithfully, and every completed initialization must print an
-exact change summary and correct next task.
+**Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 39 Node
+tests. Verified read-only partial checks, integrity/approved-check failures, advisory
+stale facts, redacted observed checks, exact final report data, and human/JSON output.
 
 ---
 

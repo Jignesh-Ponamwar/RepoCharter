@@ -87,7 +87,7 @@ test('manifest validation rejects corrupt or transcript-bearing state without ex
     await writeFile(path.join(target, '.repo-charter', 'manifest.json'), '{not json');
     const checked = await run(['check'], target);
     assert.equal(checked.exitCode, 1);
-    assert.match(checked.output.diagnostics.at(-1).message, /Invalid session manifest/);
+    assert.ok(checked.output.diagnostics.some((item) => /Invalid session manifest/.test(item.message)));
     await assert.rejects(run(['resume'], target), /Invalid session manifest/);
 
     const inspection = await inspectRepository(target);

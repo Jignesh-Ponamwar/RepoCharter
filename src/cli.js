@@ -6,6 +6,7 @@ import { createPlanningHandoff } from './session/handoff.js';
 import { createSessionManifest, readSessionManifest, writeSessionManifest } from './session/manifest.js';
 import { findAgent, selectAgents } from './session/agents.js';
 import { inspectionSnapshot, refreshSessionSnapshot } from './session/snapshot.js';
+import { validateRepositorySetup } from './validation/index.js';
 
 const COMMANDS = new Set(['init', 'check', 'resume']);
 const AGENT_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
@@ -25,9 +26,10 @@ Options:
   --non-interactive        Require all future interactive decisions to be supplied.
   -h, --help               Show this help.
 
-Phases 1-3 create ownership/session state and safe inspection evidence. They do not
-run the project grill, generate project documents, apply reconciliations, or validate
-agent compatibility.`;
+Phases 1-7 provide safe inspection/session state, planning handoff, document-generation
+primitives, documented adapter planning, and read-only setup validation. Agent behavior
+compatibility remains unverified; the public CLI does not yet accept an approved setup
+specification for document application.`;
 
 function parseAgentId(value, optionName) {
   if (!AGENT_ID_PATTERN.test(value)) {
@@ -215,10 +217,12 @@ export async function run(argumentsList, cwd = process.cwd()) {
     } catch (error) {
       diagnostics.push({ severity: 'error', message: error.message });
     }
+    const validation = await validateRepositorySetup(targetPath, inspection, session);
+    diagnostics.push(...validation.diagnostics);
     const valid = foundation.valid && !diagnostics.some((diagnostic) => diagnostic.severity === 'error');
     return {
       exitCode: valid ? 0 : 1,
-      output: { type: 'check', target: targetPath, diagnostics, inspection, session },
+      output: { type: 'check', target: targetPath, diagnostics, inspection, session, report: validation.report },
     };
   }
 
@@ -340,6 +344,13 @@ function humanOutput(output) {
     for (const command of output.inspection.commands) {
       lines.push(`Candidate ${command.kind}: ${command.command}`);
     }
+  }
+
+  if (output.report) {
+    lines.push('Final change report:');
+    for (const artifact of output.report.artifacts) lines.push(`${artifact.status}: ${artifact.path}`);
+    for (const blocker of output.report.blockers) lines.push(`blocker: ${blocker}`);
+    if (output.report.nextTask) lines.push(`Next approved task: ${output.report.nextTask}`);
   }
 
   if (output.handoff) {

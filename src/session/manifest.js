@@ -1,6 +1,7 @@
 import { readFile } from 'node:fs/promises';
 import { writeFileAtomically } from '../filesystem/atomic.js';
 import { PACKAGE_VERSION } from '../version.js';
+import { redactSensitiveText } from '../inspection/redaction.js';
 import { selectAgents } from './agents.js';
 
 export const SESSION_PATH = '.repo-charter/manifest.json';
@@ -26,7 +27,7 @@ const NEXT_STAGES = Object.freeze({
 });
 const MANIFEST_KEYS = new Set([
   'schemaVersion', 'packageVersion', 'stage', 'selectedAgents', 'confirmedDecisions',
-  'templateVersions', 'managedArtifacts', 'repositorySnapshot',
+  'templateVersions', 'managedArtifacts', 'observedChecks', 'repositorySnapshot',
 ]);
 const FORBIDDEN_KEY = /(?:raw.*(?:transcript|conversation)|(?:transcript|conversation)$|credential|token|secret|source(?:Body|Content))/i;
 
@@ -64,6 +65,7 @@ export function createSessionManifest(selectedAgents, repositorySnapshot) {
     confirmedDecisions: {},
     templateVersions: {},
     managedArtifacts: {},
+    observedChecks: [],
     repositorySnapshot,
   };
 }
@@ -92,6 +94,9 @@ export function validateSessionManifest(manifest) {
       throw new Error(`Session manifest is missing ${key}.`);
     }
   }
+  if (!Array.isArray(manifest.observedChecks) || !manifest.observedChecks.every((check) => check && typeof check.command === 'string' && ['passed', 'failed', 'skipped'].includes(check.status) && ['static', 'approved-checks', 'full'].includes(check.verificationDepth) && (check.status === 'skipped' || Number.isInteger(check.exitCode)))) {
+    throw new Error('Session manifest contains invalid observed checks.');
+  }
   validateSnapshot(manifest.repositorySnapshot);
   if (containsForbiddenKey(manifest)) {
     throw new Error('Session manifest contains forbidden transcript, credential, secret, token, or source-content data.');
@@ -118,6 +123,20 @@ export async function readSessionManifest(targetPath) {
 export async function writeSessionManifest(targetPath, manifest) {
   validateSessionManifest(manifest);
   await writeFileAtomically(targetPath, SESSION_PATH, stableJson(manifest));
+}
+
+export function recordObservedCheck(manifest, { command, exitCode, output = '', verificationDepth = 'approved-checks', skipped = false }) {
+  validateSessionManifest(manifest);
+  if (typeof command !== 'string' || command.length === 0 || !['static', 'approved-checks', 'full'].includes(verificationDepth)) {
+    throw new Error('Observed check requires a command and supported verification depth.');
+  }
+  if (!skipped && !Number.isInteger(exitCode)) {
+    throw new Error('Executed observed check requires an integer exit code.');
+  }
+  const check = skipped
+    ? { command: redactSensitiveText(command), status: 'skipped', verificationDepth }
+    : { command: redactSensitiveText(command), exitCode, status: exitCode === 0 ? 'passed' : 'failed', output: redactSensitiveText(output), verificationDepth };
+  return { ...manifest, observedChecks: [...manifest.observedChecks, check] };
 }
 
 export function transitionSession(manifest, nextStage) {

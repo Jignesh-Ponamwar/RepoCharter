@@ -285,13 +285,16 @@ Resumable state lives under `.repo-charter/`. Its versioned manifest records:
   "confirmedDecisions": {},
   "templateVersions": {},
   "managedArtifacts": {},
+  "observedChecks": [],
   "repositorySnapshot": {}
 }
 ```
 
 The final schema may refine field shapes but must preserve these responsibilities.
-State must not contain raw grill transcripts, secrets, credentials, or captured
-private source contents.
+`observedChecks` records only separately approved commands actually run (or explicit
+skips), their exit status, redacted relevant output, and verification depth; it must
+never turn an unrun check into a success. State must not contain raw grill transcripts,
+secrets, credentials, or captured private source contents.
 
 ## 7. Generated document contracts
 

@@ -28,13 +28,15 @@ The repository currently contains:
   explicit per-file reconciliation, atomic approved application, and idempotent reruns;
   and
 - Phase 6 primary-source native-surface research, selected-agent adapter planning,
-  compatibility diagnostics, and the installable RepoCharter workflow skill.
+  compatibility diagnostics, and the installable RepoCharter workflow skill; and
+- Phase 7 read-only integrity/document/adapter validation, stale-fact advice,
+  observed-check recording, final reports, and human/JSON exit-code coverage.
 
 The package is not published and the full setup workflow is not implemented yet. The
 active coding agent still conducts the interview, and public CLI orchestration of an
-approved specification and final validation remain planned work. Agent compatibility is
-not behavior-verified for any target. Commands and generated-file examples in this
-guide describe the approved design unless explicitly identified as implemented.
+approved specification remains planned work. Agent compatibility is not behavior-
+verified for any target. Commands and generated-file examples in this guide describe
+the approved design unless explicitly identified as implemented.
 
 ### What the project will become
 
@@ -848,10 +850,14 @@ calls the shared deterministic paths and progressively discloses analysis, grill
 reconciliation, and compatibility guidance. No target is behavior-verified or
 advertised as supported until the fresh-agent matrix is fully observed.
 
-### Phase 7: validation and handoff
+### Phase 7: validation and handoff — completed
 
-Implement layered `check` diagnostics, stale-fact detection, approved project checks,
-exact change reporting, and next-task selection.
+`check` is now read-only and validates ownership hashes, session shape, selected-agent
+entry surfaces, generated contract structure, approved observed-check truth, and
+deterministically stale documented paths/commands. Integrity and failed approved checks
+are errors; missing in-progress setup documents, unverified compatibility, stale facts,
+and skipped checks remain warnings. Human and JSON output include exact artifact
+statuses, observed checks, blockers, warnings, and the first unchecked task.
 
 ### Phase 8: preview distribution
 
