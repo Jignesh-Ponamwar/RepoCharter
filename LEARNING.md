@@ -859,11 +859,13 @@ are errors; missing in-progress setup documents, unverified compatibility, stale
 and skipped checks remain warnings. Human and JSON output include exact artifact
 statuses, observed checks, blockers, warnings, and the first unchecked task.
 
-### Phase 8: preview distribution
+### Phase 8: preview distribution — partially verified
 
-Complete human documentation, inspect the npm artifact, verify clean installation on
-Windows, macOS, and Linux, run the acceptance suite, and request separate approval
-before publishing.
+Lifecycle, generated-file, support-status, contribution, verification-status, and
+realistic example documentation are present. The curated packed artifact and clean
+Windows-local installation were observed. Authenticated npm name eligibility, clean
+macOS/Linux installation, fresh-agent behavior evaluations, and explicit publication
+authorization remain blocked; Phase 8 is not complete.
 
 See [TODO.md](./TODO.md) for the exact tasks and current progress.
 

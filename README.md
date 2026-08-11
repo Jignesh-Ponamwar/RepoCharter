@@ -34,7 +34,8 @@ only explicit approvals. The packaged RepoCharter skill calls those same determi
 paths and selected-agent planning produces only documented thin adapters. `check` now
 validates setup integrity read-only and prints exact artifacts, observed checks,
 blockers, warnings, and the next approved task. No coding-agent compatibility claim is
-made.
+made. Phase 8 preview documentation and Windows-local packed-artifact verification are
+complete, but cross-platform release verification and publication remain blocked.
 
 The approved product contract is in [PLAN.md](./PLAN.md); the verified implementation
 status and next task are in [TODO.md](./TODO.md).
@@ -248,8 +249,15 @@ LEARNING.md                  # technical orientation guide
 ```
 
 For a detailed explanation of the planned implementation mechanics, read
-[LEARNING.md](./LEARNING.md). For fictional examples of the planning and multi-agent
-contract documents the tool should eventually generate, see [examples/](./examples/).
+[LEARNING.md](./LEARNING.md). Preview references include:
+
+- [lifecycle and recovery](./docs/how-it-works.md);
+- [generated-file ownership and reconciliation](./docs/generated-files.md);
+- [agent support status](./docs/agent-support.md);
+- [preview verification status](./docs/verification-status.md); and
+- [contribution guidance](./CONTRIBUTING.md).
+
+Fictional generated-document and workflow examples are in [examples/](./examples/).
 
 ## Roadmap
 

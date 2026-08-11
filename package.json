@@ -12,6 +12,10 @@
     "src",
     "scripts",
     "skills",
+    "docs",
+    "examples/generated-AGENTS.example.md",
+    "examples/initialization-output.example.md",
+    "CONTRIBUTING.md",
     "LICENSE"
   ],
   "engines": {

@@ -130,9 +130,10 @@ one canonical project contract rather than duplicating per-agent instructions.
 - [x] **1.8 Verify the packed CLI artifact**: create an npm pack artifact, install it
       into an isolated fixture, and run its help, dry-run, and base initialization
       paths using Node.js 22+. Verified the isolated packed artifact under Node
-      v22.15.0; after the Phase 7 validation module was added,
-      `npm pack --dry-run --json` was reverified with the expected 39 packaged files,
-      including `README.md`, runtime modules, and the installable RepoCharter skill.
+      v22.15.0; after curated Phase 8 preview documentation/examples were included,
+      `npm pack --dry-run --json` was reverified with 48 packaged files, including
+      runtime modules, the installable skill, required preview docs, and no obsolete
+      optional-rule examples.
 
 **Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 11 Node
 tests. The isolated packed artifact ran help, dry-run, and base initialization; conflict
@@ -510,30 +511,42 @@ stale facts, redacted observed checks, exact final report data, and human/JSON o
       planned-product boundaries, local commands, safety guarantees, planned outputs,
       roadmap, Git/GitHub hygiene, and contributing guidance. Verified nine local
       links, required status sections, package contents, lint, and all 11 tests.
-- [ ] **8.2 Document the lifecycle and generated files**: add
+- [x] **8.2 Document the lifecycle and generated files**: add
       `docs/how-it-works.md` and `docs/generated-files.md` covering stages, ownership,
-      resumption, approval, reconciliation, and recovery.
-- [ ] **8.3 Document verified agent support**: add `docs/agent-support.md` with tested
+      resumption, approval, reconciliation, and recovery. Added both documents with
+      public-CLI/skill boundaries, classification, local-state, and recovery guidance.
+- [x] **8.3 Document verified agent support**: add `docs/agent-support.md` with tested
       versions, native surfaces, adapter behavior, limitations, and last verification
-      evidence.
-- [ ] **8.4 Add contribution guidance**: document Node.js requirements, local commands,
+      evidence. Added the explicit all-unverified matrix and future evaluation evidence
+      requirements without implying support.
+- [x] **8.4 Add contribution guidance**: document Node.js requirements, local commands,
       fixture conventions, compatibility research standards, and behavior-evaluation
       expectations in `CONTRIBUTING.md`.
-- [ ] **8.5 Complete realistic examples**: retain the planning examples and add a
+- [x] **8.5 Complete realistic examples**: retain the planning examples and add a
       generated `AGENTS.md` plus at least one full initialization output showing
-      evidence, conflicts, approvals, validation, and next-task reporting.
+      evidence, conflicts, approvals, validation, and next-task reporting. Added a
+      155-line fictional generated contract and clearly labeled composite workflow JSON.
 - [ ] **8.6 Verify package identity and contents**: confirm npm name availability,
       package only runtime and required documentation assets, verify license and
-      metadata, and inspect the packed artifact contents.
+      metadata, and inspect the packed artifact contents. Local metadata/license and
+      curated 48-file artifact passed; unauthenticated `npm view repo-charter` returned
+      `E404`, which cannot prove name ownership or publication eligibility. Confirm with
+      an authenticated account before checking this task.
 - [ ] **8.7 Run clean cross-platform installation**: install the packed artifact in
       clean Windows, macOS, and Linux environments and complete the documented new-
-      and existing-repository flows.
+      and existing-repository flows. Windows-local clean packed installation, help, and
+      new-repository flow passed. Blocked on clean macOS/Linux environments and an
+      observed existing-repository run there.
 - [ ] **8.8 Run the full preview acceptance suite**: verify every release criterion in
       `PLAN.md`, record actual commands and results, and leave failures or unavailable
-      environments explicitly blocked.
+      environments explicitly blocked. Local lint, 41-test suite, curated pack, isolated
+      Windows install, and new-repository flow passed; blocked by 8.6/8.7 and by no
+      fresh-agent behavior evaluations for any target.
 - [ ] **8.9 Publish only after approval**: present the final package evidence and
       request explicit authorization before performing the external npm publication.
+      Not requested or performed; publication requires separate explicit authorization.
 
-**Phase gate: PENDING**: the packed `0.1.0` artifact must satisfy every release
-acceptance criterion on supported environments; publishing remains a separate
-explicitly authorized external action.
+**Phase gate: PENDING**: local preview documentation and Windows verification are
+complete, but authenticated package-name eligibility, macOS/Linux clean installs,
+fresh-agent behavior evaluations, and explicit publication authorization remain
+unobserved blockers.
