@@ -23,11 +23,11 @@ provisional and the intended public command below is not yet available from npm:
 npx repo-charter init
 ```
 
-Only **Phase 1: project foundation and safe filesystem core** is implemented. The
-current CLI can safely initialize and validate its own minimal ownership record. It
-does **not** yet inspect projects, select agents, persist sessions, run planning
-interviews, generate `AGENTS.md`/`PLAN.md`/`TODO.md`, create agent adapters, or claim
-support for any coding agent.
+**Phases 1 and 2 are implemented.** The current CLI can safely inspect a repository,
+initialize and validate its minimal ownership record, and emit bounded human or JSON
+evidence without executing project code. It does **not** yet select agents, persist
+sessions, run planning interviews, generate `AGENTS.md`/`PLAN.md`/`TODO.md`, create
+agent adapters, or claim support for any coding agent.
 
 The approved product contract is in [PLAN.md](./PLAN.md); the verified implementation
 status and next task are in [TODO.md](./TODO.md).
@@ -75,7 +75,7 @@ Three authorities remain separate throughout the workflow:
 
 ## What is implemented today
 
-Phase 1 provides a packable Node.js 22+ ESM CLI with no runtime dependencies.
+Phases 1 and 2 provide a packable Node.js 22+ ESM CLI with no runtime dependencies.
 
 ### Local development commands
 
@@ -101,24 +101,31 @@ Until the package is published, invoke the binary from this checkout:
 # Print command help.
 node bin/repo-charter.js --help
 
-# Preview the only current initialization change. This writes nothing.
+# Safely inspect a target and preview its only current initialization change.
+# This writes nothing.
 node bin/repo-charter.js init ../target-repository --dry-run
 
-# Create the safe Phase 1 ownership record in an existing target directory.
+# Inspect a target and create the safe Phase 1 ownership record.
 node bin/repo-charter.js init ../target-repository
 
-# Validate the foundation ownership record without writing.
+# Validate foundation ownership and emit read-only inspection evidence.
 node bin/repo-charter.js check ../target-repository
+
+# Consume the same evidence through a structured JSON contract.
+node bin/repo-charter.js check ../target-repository --json
 ```
 
-Current `init` creates only:
+Current `init` performs bounded static inspection, then creates only:
 
 ```text
 .repo-charter/ownership.json
 ```
 
-That versioned file contains a marker and integrity hash for future tool-owned
-artifacts. A non-tool-owned or invalid file at that location blocks initialization;
+Inspection detects safe repository facts such as languages, frameworks, package
+managers, candidate commands, source/test/data/operations boundaries, planning and
+agent-instruction surfaces, protected/skipped paths, and uncertainty. It never runs a
+project script. The versioned ownership file contains a marker and integrity hash for
+future tool-owned artifacts. A non-tool-owned or invalid file at that location blocks initialization;
 it is never silently overwritten. A second unchanged initialization reports the record
 as unchanged.
 
@@ -145,10 +152,11 @@ The product is being built around these guarantees:
 - resumable state that does not retain raw planning transcripts or secret values; and
 - idempotent initialization: an unchanged completed setup produces no additional diff.
 
-The Phase 1 implementation already verifies atomic-write cleanup, dry-run zero writes,
-conflict preservation, dirty-worktree preservation, and an unchanged second
-initialization. Inspection privacy, session persistence, document generation, and
-agent behavior validation are planned later phases.
+The implemented foundation and inspection phases verify atomic-write cleanup, dry-run
+zero writes, conflict preservation, dirty-worktree preservation, bounded discovery,
+`.gitignore` handling, hard protected-content exclusions, redaction, and an unchanged
+second initialization. Session persistence, document generation, and agent behavior
+validation are planned later phases.
 
 ## Planned generated environment
 
@@ -223,8 +231,8 @@ The product is intentionally built in safety-first phases:
 
 1. **Foundation** — completed: packable CLI, safe paths, atomic writes, ownership,
    dry-run, fixtures, and packed-artifact verification.
-2. **Inspection** — safe bounded discovery, evidence provenance, command detection,
-   redaction, and protected-content exclusions.
+2. **Inspection** — completed: safe bounded discovery, evidence provenance, command
+   detection, redaction, protected-content exclusions, and human/JSON evidence output.
 3. **Sessions and handoff** — agent selection, resumable state, changed-file
    reinspection, and conversation handoff.
 4. **Project grill** — evidence-aware decision tree, contradiction handling, developer

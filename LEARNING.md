@@ -13,15 +13,18 @@ This distinction is essential.
 
 The repository currently contains:
 
-- the approved product plan;
-- the ordered implementation ledger;
-- this learning guide;
-- fictional example planning documents;
-- duplicated draft instruction files for Claude and Codex experimentation.
+- the approved product plan and ordered implementation ledger;
+- this learning guide and fictional planning/agent-contract examples;
+- a Node.js 22+ ESM package and local `repo-charter` CLI;
+- Phase 1 safe path resolution, atomic writes, ownership primitives, dry-run, and
+  packed-artifact tests; and
+- Phase 2 bounded static inspection, evidence records, candidate-command detection,
+  redaction, and human/JSON inspection output.
 
-There is no working npm package, CLI, repository inspector, generator, validator, or
-published skill yet. Commands and generated-file examples in this guide describe the
-approved design unless explicitly identified as implemented.
+The package is not published and the full setup workflow is not implemented yet. Agent
+selection, resumable sessions, planning interviews, document generation, adapters, and
+final validation remain planned work. Commands and generated-file examples in this
+guide describe the approved design unless explicitly identified as implemented.
 
 ### What the project will become
 
@@ -789,15 +792,17 @@ agent behavior.
 
 The planned phases are deliberately ordered by risk.
 
-### Phase 1: filesystem foundation
+### Phase 1: filesystem foundation — completed
 
-Create the Node.js 22+ package, CLI surface, safe path handling, atomic writes,
-ownership primitives, dry-run, base fixtures, and packed-artifact verification.
+The Node.js 22+ package, CLI surface, safe path handling, atomic writes, ownership
+primitives, dry-run, base fixtures, and packed-artifact verification are implemented.
 
-### Phase 2: repository inspection
+### Phase 2: repository inspection — completed
 
-Build the evidence schema, bounded discovery, stack and command detection, protected
-content exclusions, redaction, and representative inspection fixtures.
+The evidence schema, bounded discovery, stack and command detection, protected-content
+exclusions, redaction, representative fixtures, and human/JSON inspection output are
+implemented. Inspection remains static: it detects candidate commands but does not run
+them.
 
 ### Phase 3: agents and resumable state
 

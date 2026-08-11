@@ -130,8 +130,9 @@ one canonical project contract rather than duplicating per-agent instructions.
 - [x] **1.8 Verify the packed CLI artifact**: create an npm pack artifact, install it
       into an isolated fixture, and run its help, dry-run, and base initialization
       paths using Node.js 22+. Verified the isolated packed artifact under Node
-      v22.15.0; after the user README was added, `npm pack --dry-run --json` was
-      reverified with the expected 11 packaged files, including `README.md`.
+      v22.15.0; after the Phase 2 inspection modules were added,
+      `npm pack --dry-run --json` was reverified with the expected 15 packaged files,
+      including `README.md` and all runtime inspection modules.
 
 **Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 11 Node
 tests. The isolated packed artifact ran help, dry-run, and base initialization; conflict
@@ -203,38 +204,57 @@ foundation initialization, 11 tests, and packed artifact work under RepoCharter.
 > Goal: Produce trustworthy repository evidence without executing project code or
 > collecting protected content.
 
-- [ ] **2.1 Define the evidence schema**: represent discovered facts with source path,
+- [x] **2.1 Define the evidence schema**: represent discovered facts with source path,
       evidence type, confidence/classification, freshness metadata, and the distinction
-      between observed, developer-approved, and unknown information.
-- [ ] **2.2 Implement bounded file discovery**: respect `.gitignore`, file-count and
+      between observed, developer-approved, and unknown information. Added versioned
+      evidence records and explicit observed/developer-approved/unknown classifications
+      with source freshness metadata; verified schema validation and unknown evidence.
+- [x] **2.2 Implement bounded file discovery**: respect `.gitignore`, file-count and
       size limits, binary detection, explicit include/exclude configuration, and hard
       exclusions for credentials, private keys, real environment files, dependencies,
-      caches, and build outputs.
-- [ ] **2.3 Detect languages and frameworks**: inspect manifests, conventional source
+      caches, and build outputs. Implemented 1,000-file/256-KiB defaults, hard
+      exclusions that overrides cannot weaken, and bounded traversal; verified ignored,
+      binary, oversized, configured-filter, and file-limit cases.
+- [x] **2.3 Detect languages and frameworks**: inspect manifests, conventional source
       files, and configuration to identify languages, versions, frameworks, package
       managers, lockfiles, and monorepo structure without overclaiming certainty.
-- [ ] **2.4 Detect development commands**: extract candidate install, development,
+      Verified Node.js/TypeScript/Next.js/React, Python, npm, and pnpm-workspace
+      evidence against representative fixtures.
+- [x] **2.4 Detect development commands**: extract candidate install, development,
       lint, type-check, test, build, migration, and deployment commands from manifests,
-      CI, containers, and documentation without running them.
-- [ ] **2.5 Detect architecture and operations evidence**: inventory source/test
+      CI, containers, and documentation without running them. Added candidate extraction
+      from package scripts, CI `run` entries, Docker instructions, and documented
+      commands; adversarial tests prove scripts are not executed.
+- [x] **2.5 Detect architecture and operations evidence**: inventory source/test
       boundaries, schemas and migrations, CI, containers, deployment definitions,
-      health checks, and existing planning or architecture documents.
-- [ ] **2.6 Detect existing agent and planning surfaces**: inventory `AGENTS.md`,
+      health checks, and existing planning or architecture documents. Verified source,
+      test, Prisma schema, migration, CI, container, deployment, health, and document
+      evidence on fixtures.
+- [x] **2.6 Detect existing agent and planning surfaces**: inventory `AGENTS.md`,
       agent-native instruction files, `PLAN.md`, `TODO.md`, and managed markers while
-      preserving their ownership status for later reconciliation.
-- [ ] **2.7 Implement sensitive-output redaction**: prevent token-like values,
+      preserving their ownership status for later reconciliation. Added instruction-
+      surface inventory with `unknown` ownership and safe `.repo-charter` marker
+      presence detection; verified conflicting-document fixtures.
+- [x] **2.7 Implement sensitive-output redaction**: prevent token-like values,
       credentials, and secret contents from appearing in evidence, logs, state, or JSON
-      output; add adversarial fixtures for common credential formats.
-- [ ] **2.8 Emit human and JSON inspection results**: produce stable structured output
+      output; add adversarial fixtures for common credential formats. Redacts assignment,
+      bearer, GitHub, OpenAI-style, and AWS-style tokens; hard-excludes sensitive paths;
+      verified no adversarial token or source-content field reaches JSON output.
+- [x] **2.8 Emit human and JSON inspection results**: produce stable structured output
       suitable for agent orchestration and a concise human summary with uncertainty
-      and skipped-path reporting.
-- [ ] **2.9 Add representative inspection fixtures**: cover new/existing Node.js,
+      and skipped-path reporting. `init` and read-only `check` now emit stable
+      inspection records in `--json` and concise language/framework/candidate-command
+      summaries for humans.
+- [x] **2.9 Add representative inspection fixtures**: cover new/existing Node.js,
       Python, mixed-language monorepo, ignored content, oversized files, deceptive
-      extensions, conflicting documentation, and missing Git metadata.
+      extensions, conflicting documentation, and missing Git metadata. Added Node,
+      Python, monorepo, ignored, and conflicting-document fixture trees plus dynamic
+      oversized/binary/secret/missing-Git cases; verified all 17 Node tests.
 
-**Phase gate: PENDING**: fixture evidence must accurately describe supported project
-facts, expose uncertainty, skip protected content, redact sensitive values, and run no
-project scripts or lifecycle hooks.
+**Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 17 Node
+tests. Fixture evidence detects supported facts and uncertainty, skips protected
+content, redacts adversarial token values, emits human/JSON inspection output, and
+never executes the fixture package script or lifecycle hooks.
 
 ---
 

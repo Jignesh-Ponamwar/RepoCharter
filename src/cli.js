@@ -1,6 +1,7 @@
 import { applyFoundationPlan, checkFoundation, planFoundationInitialization } from './foundation.js';
 import { CliError } from './errors.js';
 import { resolveTargetDirectory } from './filesystem/paths.js';
+import { inspectRepository } from './inspection/index.js';
 
 const COMMANDS = new Set(['init', 'check', 'resume']);
 const AGENT_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
@@ -158,6 +159,8 @@ export async function run(argumentsList, cwd = process.cwd()) {
     throw new CliError('No resumable setup session exists. Session support begins in Phase 3.', 1);
   }
 
+  const inspection = await inspectRepository(targetPath);
+
   if (options.command === 'check') {
     const result = await checkFoundation(targetPath);
     return {
@@ -166,6 +169,7 @@ export async function run(argumentsList, cwd = process.cwd()) {
         type: 'check',
         target: targetPath,
         diagnostics: result.diagnostics,
+        inspection,
       },
     };
   }
@@ -187,6 +191,7 @@ export async function run(argumentsList, cwd = process.cwd()) {
       dryRun: options.dryRun,
       changes: plan.changes.map(({ path, status }) => ({ path, status })),
       warnings: foundationWarnings(options),
+      inspection,
     },
   };
 }
@@ -213,6 +218,21 @@ function humanOutput(output) {
 
   for (const warning of output.warnings ?? []) {
     lines.push(`warning: ${warning}`);
+  }
+
+  if (output.inspection) {
+    const values = (fact) => output.inspection.evidence
+      .filter((item) => item.fact === fact && item.classification === 'observed')
+      .map((item) => item.value)
+      .filter((value, index, list) => list.indexOf(value) === index);
+    const languages = values('language');
+    const frameworks = values('framework');
+    lines.push(`Inspection: ${output.inspection.evidence.length} evidence records; ${output.inspection.skipped.length} skipped paths.`);
+    if (languages.length > 0) lines.push(`Languages: ${languages.join(', ')}`);
+    if (frameworks.length > 0) lines.push(`Frameworks: ${frameworks.join(', ')}`);
+    for (const command of output.inspection.commands) {
+      lines.push(`Candidate ${command.kind}: ${command.command}`);
+    }
   }
 
   return lines.join('\n');
