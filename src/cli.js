@@ -2,6 +2,10 @@ import { applyFoundationPlan, checkFoundation, planFoundationInitialization } fr
 import { CliError } from './errors.js';
 import { resolveTargetDirectory } from './filesystem/paths.js';
 import { inspectRepository } from './inspection/index.js';
+import { createPlanningHandoff } from './session/handoff.js';
+import { createSessionManifest, readSessionManifest, writeSessionManifest } from './session/manifest.js';
+import { findAgent, selectAgents } from './session/agents.js';
+import { inspectionSnapshot, refreshSessionSnapshot } from './session/snapshot.js';
 
 const COMMANDS = new Set(['init', 'check', 'resume']);
 const AGENT_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
@@ -9,20 +13,21 @@ const AGENT_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 const HELP = `Usage: repo-charter <command> [path] [options]
 
 Commands:
-  init [path]              Initialize the Phase 1 foundation safely.
-  check [path]             Validate foundation ownership state without writing.
-  resume [path]            Report resumable setup state (available from Phase 3).
+  init [path]              Inspect a repository and create or reuse a setup session.
+  check [path]             Validate local state and inspect without writing.
+  resume [path]            Reinspect and resume an incomplete setup session.
 
 Options:
   --dry-run                Preview init changes without writing.
-  --primary-agent <agent>  Record a requested primary-agent value for a future session.
-  --agents <agent,...>     Record requested secondary-agent values for a future session.
+  --primary-agent <agent>  Required for a new setup session.
+  --agents <agent,...>     Optional secondary agents for a new setup session.
   --json                   Print structured output.
   --non-interactive        Require all future interactive decisions to be supplied.
   -h, --help               Show this help.
 
-Phase 1 only creates and validates .repo-charter/ownership.json. It does not inspect
-the repository, select agents, create a session, or generate project documents.`;
+Phases 1-3 create ownership/session state and safe inspection evidence. They do not
+run the project grill, generate project documents, apply reconciliations, or validate
+agent compatibility.`;
 
 function parseAgentId(value, optionName) {
   if (!AGENT_ID_PATTERN.test(value)) {
@@ -134,12 +139,56 @@ export function parseArguments(argumentsList) {
   return options;
 }
 
-function foundationWarnings(options) {
-  if (!options.primaryAgent) {
-    return [];
+function sameSelection(left, right) {
+  return left.primary === right.primary
+    && left.secondary.length === right.secondary.length
+    && left.secondary.every((agent, index) => agent === right.secondary[index]);
+}
+
+function sessionWarnings(selectedAgents) {
+  return [selectedAgents.primary, ...selectedAgents.secondary]
+    .map((agentId) => findAgent(agentId))
+    .filter((agent) => agent.compatibility !== 'verified')
+    .map((agent) => `${agent.displayName} compatibility is ${agent.compatibility}; no support claim is made.`);
+}
+
+async function sessionForInit(options, targetPath, inspection) {
+  const existing = await readSessionManifest(targetPath);
+  if (!existing) {
+    if (!options.primaryAgent) {
+      throw new CliError('A new setup session requires --primary-agent <agent>.', 2);
+    }
+    let selectedAgents;
+    try {
+      selectedAgents = selectAgents(options.primaryAgent, options.agents);
+    } catch (error) {
+      throw new CliError(error.message, 2);
+    }
+    return {
+      manifest: createSessionManifest(selectedAgents, inspectionSnapshot(inspection)),
+      change: 'create',
+      changedPaths: [],
+    };
   }
 
-  return ['Agent selections are parsed but are not persisted until the Phase 3 session implementation.'];
+  if (options.primaryAgent) {
+    let requestedSelection;
+    try {
+      requestedSelection = selectAgents(options.primaryAgent, options.agents);
+    } catch (error) {
+      throw new CliError(error.message, 2);
+    }
+    if (!sameSelection(requestedSelection, existing.selectedAgents)) {
+      throw new CliError('Requested agents do not match the existing setup session. Use resume or the persisted selection.', 2);
+    }
+  }
+
+  const refreshed = refreshSessionSnapshot(existing, inspectionSnapshot(inspection));
+  return {
+    manifest: refreshed.manifest,
+    change: refreshed.changed ? 'update' : 'unchanged',
+    changedPaths: refreshed.changedPaths,
+  };
 }
 
 export async function run(argumentsList, cwd = process.cwd()) {
@@ -155,23 +204,55 @@ export async function run(argumentsList, cwd = process.cwd()) {
     throw new CliError(error.message, 1);
   }
 
-  if (options.command === 'resume') {
-    throw new CliError('No resumable setup session exists. Session support begins in Phase 3.', 1);
-  }
-
   const inspection = await inspectRepository(targetPath);
 
   if (options.command === 'check') {
-    const result = await checkFoundation(targetPath);
+    const foundation = await checkFoundation(targetPath);
+    const diagnostics = [...foundation.diagnostics];
+    let session;
+    try {
+      session = await readSessionManifest(targetPath);
+    } catch (error) {
+      diagnostics.push({ severity: 'error', message: error.message });
+    }
+    const valid = foundation.valid && !diagnostics.some((diagnostic) => diagnostic.severity === 'error');
     return {
-      exitCode: result.valid ? 0 : 1,
+      exitCode: valid ? 0 : 1,
+      output: { type: 'check', target: targetPath, diagnostics, inspection, session },
+    };
+  }
+
+  if (options.command === 'resume') {
+    let manifest;
+    try {
+      manifest = await readSessionManifest(targetPath);
+    } catch (error) {
+      throw new CliError(error.message, 1);
+    }
+    if (!manifest) {
+      throw new CliError('No resumable setup session exists. Run init with --primary-agent first.', 1);
+    }
+
+    const refreshed = refreshSessionSnapshot(manifest, inspectionSnapshot(inspection));
+    if (refreshed.changed) {
+      await writeSessionManifest(targetPath, refreshed.manifest);
+    }
+    return {
+      exitCode: 0,
       output: {
-        type: 'check',
+        type: 'resume',
         target: targetPath,
-        diagnostics: result.diagnostics,
         inspection,
+        session: refreshed.manifest,
+        changedPaths: refreshed.changedPaths,
+        handoff: createPlanningHandoff(refreshed.manifest, inspection),
+        warnings: sessionWarnings(refreshed.manifest.selectedAgents),
       },
     };
+  }
+
+  if (options.nonInteractive) {
+    throw new CliError('--non-interactive cannot create a session until every planning decision can be supplied in a later phase.', 2);
   }
 
   const plan = await planFoundationInitialization(targetPath);
@@ -179,19 +260,37 @@ export async function run(argumentsList, cwd = process.cwd()) {
     throw new CliError(`Initialization blocked: ${plan.conflicts[0].path}: ${plan.conflicts[0].reason}`, 1);
   }
 
-  if (!options.dryRun) {
-    await applyFoundationPlan(targetPath, plan);
+  let session;
+  try {
+    session = await sessionForInit(options, targetPath, inspection);
+  } catch (error) {
+    if (error instanceof CliError) throw error;
+    throw new CliError(error.message, 1);
   }
 
+  if (!options.dryRun) {
+    await applyFoundationPlan(targetPath, plan);
+    if (session.change !== 'unchanged') {
+      await writeSessionManifest(targetPath, session.manifest);
+    }
+  }
+
+  const changes = [
+    ...plan.changes.map(({ path, status }) => ({ path, status })),
+    { path: '.repo-charter/manifest.json', status: session.change },
+  ];
   return {
     exitCode: 0,
     output: {
       type: 'init',
       target: targetPath,
       dryRun: options.dryRun,
-      changes: plan.changes.map(({ path, status }) => ({ path, status })),
-      warnings: foundationWarnings(options),
+      changes,
       inspection,
+      session: session.manifest,
+      changedPaths: session.changedPaths,
+      handoff: createPlanningHandoff(session.manifest, inspection),
+      warnings: sessionWarnings(session.manifest.selectedAgents),
     },
   };
 }
@@ -220,6 +319,14 @@ function humanOutput(output) {
     lines.push(`warning: ${warning}`);
   }
 
+  if (output.session) {
+    lines.push(`Session stage: ${output.session.stage}`);
+    lines.push(`Primary agent: ${output.session.selectedAgents.primary}`);
+    if (output.changedPaths?.length > 0) {
+      lines.push(`Reinspected changed paths: ${output.changedPaths.join(', ')}`);
+    }
+  }
+
   if (output.inspection) {
     const values = (fact) => output.inspection.evidence
       .filter((item) => item.fact === fact && item.classification === 'observed')
@@ -233,6 +340,10 @@ function humanOutput(output) {
     for (const command of output.inspection.commands) {
       lines.push(`Candidate ${command.kind}: ${command.command}`);
     }
+  }
+
+  if (output.handoff) {
+    lines.push('', 'Planning handoff:', output.handoff.trimEnd());
   }
 
   return lines.join('\n');

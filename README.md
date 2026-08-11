@@ -23,11 +23,12 @@ provisional and the intended public command below is not yet available from npm:
 npx repo-charter init
 ```
 
-**Phases 1 and 2 are implemented.** The current CLI can safely inspect a repository,
-initialize and validate its minimal ownership record, and emit bounded human or JSON
-evidence without executing project code. It does **not** yet select agents, persist
-sessions, run planning interviews, generate `AGENTS.md`/`PLAN.md`/`TODO.md`, create
-agent adapters, or claim support for any coding agent.
+**Phases 1, 2, and 3 are implemented.** The current CLI can safely inspect a
+repository, initialize and validate ownership state, select one primary and optional
+secondary agents, persist a safe resumable session, and emit bounded human or JSON
+evidence without executing project code. It does **not** yet run planning interviews,
+generate `AGENTS.md`/`PLAN.md`/`TODO.md`, create agent adapters, or claim support for
+any coding agent.
 
 The approved product contract is in [PLAN.md](./PLAN.md); the verified implementation
 status and next task are in [TODO.md](./TODO.md).
@@ -75,7 +76,7 @@ Three authorities remain separate throughout the workflow:
 
 ## What is implemented today
 
-Phases 1 and 2 provide a packable Node.js 22+ ESM CLI with no runtime dependencies.
+Phases 1, 2, and 3 provide a packable Node.js 22+ ESM CLI with no runtime dependencies.
 
 ### Local development commands
 
@@ -101,25 +102,37 @@ Until the package is published, invoke the binary from this checkout:
 # Print command help.
 node bin/repo-charter.js --help
 
-# Safely inspect a target and preview its only current initialization change.
-# This writes nothing.
-node bin/repo-charter.js init ../target-repository --dry-run
+# Safely inspect a target and preview its ownership/session initialization.
+# A new session requires one selected primary agent. This writes nothing.
+node bin/repo-charter.js init ../target-repository --dry-run --primary-agent codex
 
-# Inspect a target and create the safe Phase 1 ownership record.
-node bin/repo-charter.js init ../target-repository
+# Inspect a target, record selected agents, create safe ownership/session state,
+# and print the exact planning handoff.
+node bin/repo-charter.js init ../target-repository --primary-agent codex --agents claude-code
 
-# Validate foundation ownership and emit read-only inspection evidence.
+# Validate local state and emit read-only inspection evidence.
 node bin/repo-charter.js check ../target-repository
 
-# Consume the same evidence through a structured JSON contract.
-node bin/repo-charter.js check ../target-repository --json
+# Reinspect a persisted session, invalidate changed evidence, and print its handoff.
+node bin/repo-charter.js resume ../target-repository
+
+# Consume the same evidence and handoff through a structured JSON contract.
+node bin/repo-charter.js resume ../target-repository --json
 ```
 
 Current `init` performs bounded static inspection, then creates only:
 
 ```text
 .repo-charter/ownership.json
+.repo-charter/manifest.json
 ```
+
+A new session requires `--primary-agent`; optional `--agents` values become secondary
+agents. The manifest stores schema/package versions, stage, selected agents, empty
+confirmed decisions/template/ownership maps, and safe path/mtime/size snapshot metadata.
+It never stores repository source bodies, raw conversation transcripts, credentials, or
+secrets. `resume` reinspects the target and updates the safe snapshot only when relevant
+files changed.
 
 Inspection detects safe repository facts such as languages, frameworks, package
 managers, candidate commands, source/test/data/operations boundaries, planning and
@@ -129,13 +142,10 @@ future tool-owned artifacts. A non-tool-owned or invalid file at that location b
 it is never silently overwritten. A second unchanged initialization reports the record
 as unchanged.
 
-`--dry-run` calculates the proposed ownership-file creation without writing a target
-file or session file. `check` is read-only. `resume` is present in the public command
-surface but reports that resumable sessions begin in Phase 3.
-
-The CLI already accepts `--primary-agent`, `--agents`, and `--non-interactive` as part
-of the future command contract, but Phase 1 deliberately does not persist or act on
-agent selections.
+`--dry-run` calculates ownership and session creation without writing either file.
+`check` is read-only. `resume` reloads a valid incomplete session, reinspects changed
+files, and prints the next planning handoff. `--non-interactive` is intentionally
+rejected until a later phase can supply every required planning decision.
 
 ## Safety guarantees
 
@@ -152,11 +162,12 @@ The product is being built around these guarantees:
 - resumable state that does not retain raw planning transcripts or secret values; and
 - idempotent initialization: an unchanged completed setup produces no additional diff.
 
-The implemented foundation and inspection phases verify atomic-write cleanup, dry-run
-zero writes, conflict preservation, dirty-worktree preservation, bounded discovery,
-`.gitignore` handling, hard protected-content exclusions, redaction, and an unchanged
-second initialization. Session persistence, document generation, and agent behavior
-validation are planned later phases.
+The implemented foundation, inspection, and session phases verify atomic-write cleanup,
+dry-run zero writes, conflict preservation, dirty-worktree preservation, bounded
+discovery, `.gitignore` handling, hard protected-content exclusions, redaction,
+validated selected-agent sessions, corrupt-manifest rejection, changed-file
+reinspection, and an unchanged second initialization. Document generation and agent
+behavior validation are planned later phases.
 
 ## Planned generated environment
 
@@ -233,8 +244,8 @@ The product is intentionally built in safety-first phases:
    dry-run, fixtures, and packed-artifact verification.
 2. **Inspection** — completed: safe bounded discovery, evidence provenance, command
    detection, redaction, protected-content exclusions, and human/JSON evidence output.
-3. **Sessions and handoff** — agent selection, resumable state, changed-file
-   reinspection, and conversation handoff.
+3. **Sessions and handoff** — completed: validated agent selection, safe resumable
+   state, changed-file reinspection, and manual/JSON planning handoff.
 4. **Project grill** — evidence-aware decision tree, contradiction handling, developer
    approval, and an approved setup specification.
 5. **Generation and reconciliation** — project-specific documents, conflict preview,

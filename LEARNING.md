@@ -19,11 +19,13 @@ The repository currently contains:
 - Phase 1 safe path resolution, atomic writes, ownership primitives, dry-run, and
   packed-artifact tests; and
 - Phase 2 bounded static inspection, evidence records, candidate-command detection,
-  redaction, and human/JSON inspection output.
+  redaction, and human/JSON inspection output; and
+- Phase 3 agent registry, validated primary/secondary selection, safe session manifests,
+  changed-file reinspection, and manual/JSON planning handoff.
 
-The package is not published and the full setup workflow is not implemented yet. Agent
-selection, resumable sessions, planning interviews, document generation, adapters, and
-final validation remain planned work. Commands and generated-file examples in this
+The package is not published and the full setup workflow is not implemented yet.
+Planning interviews, document generation, adapters, and final validation remain planned
+work. Commands and generated-file examples in this
 guide describe the approved design unless explicitly identified as implemented.
 
 ### What the project will become
@@ -804,10 +806,12 @@ exclusions, redaction, representative fixtures, and human/JSON inspection output
 implemented. Inspection remains static: it detects candidate commands but does not run
 them.
 
-### Phase 3: agents and resumable state
+### Phase 3: agents and resumable state — completed
 
-Implement the agent registry, primary/secondary selection, manifest, stage machine,
-changed-file reinspection, conversation handoff, and interruption tests.
+The agent registry, primary/secondary selection, versioned safe manifest, stage
+transitions, changed-file reinspection, conversation handoff, and interruption/resume
+tests are implemented. Compatibility remains unverified until the later agent behavior
+evaluation phase.
 
 ### Phase 4: project grill
 

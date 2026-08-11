@@ -58,10 +58,14 @@ test('dry run previews ownership initialization without creating files', async (
   const target = await temporaryDirectory();
 
   try {
-    const result = await run(['init', '--dry-run'], target);
+    const result = await run(['init', '--dry-run', '--primary-agent', 'codex'], target);
     assert.equal(result.exitCode, 0);
-    assert.deepEqual(result.output.changes, [{ path: OWNERSHIP_PATH, status: 'create' }]);
+    assert.deepEqual(result.output.changes, [
+      { path: OWNERSHIP_PATH, status: 'create' },
+      { path: '.repo-charter/manifest.json', status: 'create' },
+    ]);
     await assert.rejects(readFile(path.join(target, OWNERSHIP_PATH), 'utf8'), { code: 'ENOENT' });
+    await assert.rejects(readFile(path.join(target, '.repo-charter/manifest.json'), 'utf8'), { code: 'ENOENT' });
   } finally {
     await removeDirectory(target);
   }
@@ -73,9 +77,12 @@ test('foundation init is idempotent and preserves an existing project file', asy
 
   try {
     await cp(fixturePath, target, { recursive: true });
-    const first = await run(['init'], target);
+    const first = await run(['init', '--primary-agent', 'codex'], target);
     assert.equal(first.exitCode, 0);
-    assert.deepEqual(first.output.changes, [{ path: OWNERSHIP_PATH, status: 'create' }]);
+    assert.deepEqual(first.output.changes, [
+      { path: OWNERSHIP_PATH, status: 'create' },
+      { path: '.repo-charter/manifest.json', status: 'create' },
+    ]);
 
     const ownershipContent = await readFile(path.join(target, OWNERSHIP_PATH), 'utf8');
     assert.equal(verifyOwnershipDocument(ownershipContent).valid, true);
@@ -83,7 +90,10 @@ test('foundation init is idempotent and preserves an existing project file', asy
 
     const second = await run(['init'], target);
     assert.equal(second.exitCode, 0);
-    assert.deepEqual(second.output.changes, [{ path: OWNERSHIP_PATH, status: 'unchanged' }]);
+    assert.deepEqual(second.output.changes, [
+      { path: OWNERSHIP_PATH, status: 'unchanged' },
+      { path: '.repo-charter/manifest.json', status: 'unchanged' },
+    ]);
     assert.equal(await readFile(path.join(target, OWNERSHIP_PATH), 'utf8'), ownershipContent);
   } finally {
     await removeDirectory(target);
@@ -115,7 +125,7 @@ test('init preserves a conflicting existing ownership file', async () => {
   try {
     await mkdir(ownershipDirectory);
     await writeFile(ownershipFile, 'project-owned content\n');
-    await assert.rejects(run(['init'], target), /Initialization blocked/);
+    await assert.rejects(run(['init', '--primary-agent', 'codex'], target), /Initialization blocked/);
     assert.equal(await readFile(ownershipFile, 'utf8'), 'project-owned content\n');
   } finally {
     await removeDirectory(target);
@@ -173,7 +183,7 @@ test('initialization preserves an existing dirty Git worktree', async (context) 
     await writeFile(path.join(target, 'README.md'), 'dirty\n');
 
     const dirtyDiff = runProcess(gitCommand, ['diff', '--', 'README.md'], { cwd: target }).stdout;
-    await run(['init'], target);
+    await run(['init', '--primary-agent', 'codex'], target);
     assert.equal(runProcess(gitCommand, ['diff', '--', 'README.md'], { cwd: target }).stdout, dirtyDiff);
     assert.equal(await readFile(path.join(target, 'README.md'), 'utf8'), 'dirty\n');
     assert.match(runProcess(gitCommand, ['status', '--short'], { cwd: target }).stdout, /\?\? \.repo-charter\//);
@@ -182,11 +192,11 @@ test('initialization preserves an existing dirty Git worktree', async (context) 
   }
 });
 
-test('resume is an honest unavailable Phase 1 command', async () => {
+test('resume rejects a target without a persisted session', async () => {
   const target = await temporaryDirectory();
 
   try {
-    await assert.rejects(run(['resume'], target), /Session support begins in Phase 3/);
+    await assert.rejects(run(['resume'], target), /No resumable setup session exists/);
   } finally {
     await removeDirectory(target);
   }
@@ -216,11 +226,11 @@ test('packed artifact installs in isolation and runs help, dry run, and base ini
     assert.match(help.stdout, /Usage: repo-charter/);
 
     await mkdir(targetDirectory);
-    const dryRun = runProcess(binary, ['init', targetDirectory, '--dry-run'], { cwd: workspace });
+    const dryRun = runProcess(binary, ['init', targetDirectory, '--dry-run', '--primary-agent', 'codex'], { cwd: workspace });
     assert.equal(dryRun.status, 0, dryRun.stderr);
     await assert.rejects(readFile(path.join(targetDirectory, OWNERSHIP_PATH), 'utf8'), { code: 'ENOENT' });
 
-    const initialized = runProcess(binary, ['init', targetDirectory], { cwd: workspace });
+    const initialized = runProcess(binary, ['init', targetDirectory, '--primary-agent', 'codex'], { cwd: workspace });
     assert.equal(initialized.status, 0, initialized.stderr);
     assert.equal(verifyOwnershipDocument(await readFile(path.join(targetDirectory, OWNERSHIP_PATH), 'utf8')).valid, true);
   } finally {

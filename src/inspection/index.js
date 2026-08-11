@@ -282,5 +282,8 @@ export async function inspectRepository(rootPath, options = {}) {
     },
     skipped: discovery.skipped,
     limits: discovery.limits,
+    snapshot: {
+      files: files.map((file) => ({ path: file.source.path, freshness: file.source.freshness })),
+    },
   };
 }

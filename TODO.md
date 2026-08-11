@@ -130,9 +130,9 @@ one canonical project contract rather than duplicating per-agent instructions.
 - [x] **1.8 Verify the packed CLI artifact**: create an npm pack artifact, install it
       into an isolated fixture, and run its help, dry-run, and base initialization
       paths using Node.js 22+. Verified the isolated packed artifact under Node
-      v22.15.0; after the Phase 2 inspection modules were added,
-      `npm pack --dry-run --json` was reverified with the expected 15 packaged files,
-      including `README.md` and all runtime inspection modules.
+      v22.15.0; after the Phase 3 session modules were added,
+      `npm pack --dry-run --json` was reverified with the expected 20 packaged files,
+      including `README.md` and all runtime inspection/session modules.
 
 **Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 11 Node
 tests. The isolated packed artifact ran help, dry-run, and base initialization; conflict
@@ -263,34 +263,45 @@ never executes the fixture package script or lifecycle hooks.
 > Goal: Connect deterministic CLI inspection to an adaptive in-agent planning session
 > without storing sensitive conversation history.
 
-- [ ] **3.1 Define the supported-agent registry**: model agent IDs, display names,
+- [x] **3.1 Define the supported-agent registry**: model agent IDs, display names,
       native instruction surfaces, compatibility status, tested versions, limitations,
-      and adapter template versions without claiming unverified support.
-- [ ] **3.2 Implement primary and secondary selection**: require one primary agent,
+      and adapter template versions without claiming unverified support. Added the
+      seven target-agent registry with explicit `unverified` compatibility and no tested
+      versions or support claims.
+- [x] **3.2 Implement primary and secondary selection**: require one primary agent,
       accept optional secondary agents, validate selections, and persist the result in
-      the local session manifest.
-- [ ] **3.3 Implement the versioned session manifest**: store schema/package versions,
+      the local session manifest. New `init` requires a valid primary agent, validates
+      unique secondaries, persists selection, and rejects mismatched later selections.
+- [x] **3.3 Implement the versioned session manifest**: store schema/package versions,
       current stage, confirmed decisions, selected agents, template versions, managed
-      artifacts, and safe repository snapshot metadata under `.repo-charter/`.
-- [ ] **3.4 Implement staged transitions**: enforce valid movement through inspection,
+      artifacts, and safe repository snapshot metadata under `.repo-charter/`. Added
+      schema validation and atomic manifest writes with paths/mtime/size metadata only.
+- [x] **3.4 Implement staged transitions**: enforce valid movement through inspection,
       agent selection, interview handoff, approval, application, and validation; never
-      persist a later stage before its completion criterion is met.
-- [ ] **3.5 Implement changed-file reinspection**: compare safe snapshot metadata on
+      persist a later stage before its completion criterion is met. Added a validated
+      one-way stage transition map and tests for valid/invalid transitions.
+- [x] **3.5 Implement changed-file reinspection**: compare safe snapshot metadata on
       resume, invalidate affected evidence, and re-inspect changed paths before using
-      stored conclusions.
-- [ ] **3.6 Generate the conversation handoff**: output an exact agent prompt containing
+      stored conclusions. `resume` re-inspects every safe file, reports changed paths,
+      updates only changed snapshots, and resets later stages to handoff-ready.
+- [x] **3.6 Generate the conversation handoff**: output an exact agent prompt containing
       structured evidence, settled selections, interview procedure, privacy rules, and
-      required approval gates without embedding unnecessary source content.
-- [ ] **3.7 Support manual and agent-driven invocation**: make the handoff usable when
+      required approval gates without embedding unnecessary source content. Added a
+      deterministic handoff with redacted evidence, selection metadata, and explicit
+      confirmation/no-transcript rules.
+- [x] **3.7 Support manual and agent-driven invocation**: make the handoff usable when
       printed to a terminal and directly consumable through `--json` when an active
-      coding agent runs the CLI.
-- [ ] **3.8 Add interruption and resume tests**: stop safely at every stage, resume
+      coding agent runs the CLI. Verified terminal and JSON `init`/`resume` handoffs.
+- [x] **3.8 Add interruption and resume tests**: stop safely at every stage, resume
       unchanged sessions, re-inspect changed repositories, reject corrupt manifests,
-      and confirm that raw conversation or secrets are never persisted.
+      and confirm that raw conversation or secrets are never persisted. Added session
+      tests for all seven valid stages, changed files, corrupt/transcript manifests,
+      unchanged resume, and absent source/secret data.
 
-**Phase gate: PENDING**: supported agent selections, staged state, interruption,
-changed-file reinspection, resume, and manual conversation handoff must work without
-persisting transcripts, source bodies, or secrets.
+**Phase gate: PASSED 2026-08-11**: Node v22.15.0 passed `npm run lint` and all 22 Node
+tests. Validated agent selection, manifest stages, changed-file reinspection, manual
+and JSON handoff, corrupt-manifest rejection, and no persisted transcripts, source
+bodies, or secrets.
 
 ---
 

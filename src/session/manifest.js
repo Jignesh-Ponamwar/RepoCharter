@@ -1,0 +1,129 @@
+import { readFile } from 'node:fs/promises';
+import { writeFileAtomically } from '../filesystem/atomic.js';
+import { PACKAGE_VERSION } from '../version.js';
+import { selectAgents } from './agents.js';
+
+export const SESSION_PATH = '.repo-charter/manifest.json';
+export const SESSION_SCHEMA_VERSION = 1;
+export const SESSION_STAGES = Object.freeze([
+  'inspected',
+  'agents-selected',
+  'handoff-ready',
+  'decisions-confirmed',
+  'changes-approved',
+  'applied',
+  'validated',
+]);
+
+const NEXT_STAGES = Object.freeze({
+  inspected: ['agents-selected'],
+  'agents-selected': ['handoff-ready'],
+  'handoff-ready': ['decisions-confirmed'],
+  'decisions-confirmed': ['changes-approved'],
+  'changes-approved': ['applied'],
+  applied: ['validated'],
+  validated: [],
+});
+const MANIFEST_KEYS = new Set([
+  'schemaVersion', 'packageVersion', 'stage', 'selectedAgents', 'confirmedDecisions',
+  'templateVersions', 'managedArtifacts', 'repositorySnapshot',
+]);
+const FORBIDDEN_KEY = /(?:raw.*(?:transcript|conversation)|(?:transcript|conversation)$|credential|token|secret|source(?:Body|Content))/i;
+
+function stableJson(value) {
+  return `${JSON.stringify(value, null, 2)}\n`;
+}
+
+function containsForbiddenKey(value) {
+  if (!value || typeof value !== 'object') return false;
+  return Object.entries(value).some(([key, child]) => FORBIDDEN_KEY.test(key) || containsForbiddenKey(child));
+}
+
+function validateSnapshot(snapshot) {
+  if (!snapshot || !Array.isArray(snapshot.files)) {
+    throw new Error('Session manifest is missing a safe repository snapshot.');
+  }
+  for (const file of snapshot.files) {
+    if (typeof file.path !== 'string' || !file.freshness || typeof file.freshness.modifiedAt !== 'string' || !Number.isFinite(file.freshness.sizeBytes)) {
+      throw new Error('Session manifest contains an invalid repository snapshot entry.');
+    }
+  }
+}
+
+export function createSessionManifest(selectedAgents, repositorySnapshot) {
+  selectAgents(selectedAgents.primary, selectedAgents.secondary);
+  validateSnapshot(repositorySnapshot);
+  return {
+    schemaVersion: SESSION_SCHEMA_VERSION,
+    packageVersion: PACKAGE_VERSION,
+    stage: 'handoff-ready',
+    selectedAgents: {
+      primary: selectedAgents.primary,
+      secondary: [...selectedAgents.secondary],
+    },
+    confirmedDecisions: {},
+    templateVersions: {},
+    managedArtifacts: {},
+    repositorySnapshot,
+  };
+}
+
+export function validateSessionManifest(manifest) {
+  if (!manifest || typeof manifest !== 'object' || Array.isArray(manifest)) {
+    throw new Error('Session manifest must be a JSON object.');
+  }
+  for (const key of Object.keys(manifest)) {
+    if (!MANIFEST_KEYS.has(key)) {
+      throw new Error(`Session manifest contains an unsupported field: ${key}.`);
+    }
+  }
+  if (manifest.schemaVersion !== SESSION_SCHEMA_VERSION || typeof manifest.packageVersion !== 'string') {
+    throw new Error('Session manifest has an unsupported schema or package version.');
+  }
+  if (!SESSION_STAGES.includes(manifest.stage)) {
+    throw new Error(`Session manifest has an invalid stage: ${manifest.stage}.`);
+  }
+  if (!manifest.selectedAgents || !Array.isArray(manifest.selectedAgents.secondary)) {
+    throw new Error('Session manifest is missing selected agents.');
+  }
+  selectAgents(manifest.selectedAgents.primary, manifest.selectedAgents.secondary);
+  for (const key of ['confirmedDecisions', 'templateVersions', 'managedArtifacts']) {
+    if (!manifest[key] || typeof manifest[key] !== 'object' || Array.isArray(manifest[key])) {
+      throw new Error(`Session manifest is missing ${key}.`);
+    }
+  }
+  validateSnapshot(manifest.repositorySnapshot);
+  if (containsForbiddenKey(manifest)) {
+    throw new Error('Session manifest contains forbidden transcript, credential, secret, token, or source-content data.');
+  }
+  return manifest;
+}
+
+export async function readSessionManifest(targetPath) {
+  let content;
+  try {
+    content = await readFile(`${targetPath}/.repo-charter/manifest.json`, 'utf8');
+  } catch (error) {
+    if (error.code === 'ENOENT') return undefined;
+    throw new Error(`Cannot read session manifest: ${error.code ?? error.message}`);
+  }
+
+  try {
+    return validateSessionManifest(JSON.parse(content));
+  } catch (error) {
+    throw new Error(`Invalid session manifest: ${error.message}`);
+  }
+}
+
+export async function writeSessionManifest(targetPath, manifest) {
+  validateSessionManifest(manifest);
+  await writeFileAtomically(targetPath, SESSION_PATH, stableJson(manifest));
+}
+
+export function transitionSession(manifest, nextStage) {
+  validateSessionManifest(manifest);
+  if (!NEXT_STAGES[manifest.stage].includes(nextStage)) {
+    throw new Error(`Invalid session transition: ${manifest.stage} -> ${nextStage}.`);
+  }
+  return { ...manifest, stage: nextStage };
+}
