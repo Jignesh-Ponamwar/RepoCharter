@@ -1,0 +1,23 @@
+{
+  "name": "repo-charter",
+  "version": "0.1.0",
+  "description": "Safe local-first initializer for agent-ready repositories",
+  "license": "MIT",
+  "type": "module",
+  "bin": {
+    "repo-charter": "bin/repo-charter.js"
+  },
+  "files": [
+    "bin",
+    "src",
+    "scripts",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "lint": "node scripts/lint.js",
+    "test": "node --test"
+  }
+}
