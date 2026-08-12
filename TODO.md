@@ -626,10 +626,47 @@ fresh-agent behavior evaluations remain Phase 8B release work.
 
 ---
 
+## Phase 8C: Release documentation and repository hygiene
+
+> Goal: Make the public project documentation accurate and make this repository's
+> local planning, agent configuration, secrets, and generated artifacts safe to keep
+> out of future commits before release acceptance.
+
+- [x] **8C.1 Rewrite the public README**: replace stale/planned-product-heavy prose
+      with a clear RepoCharter overview, honest current status, local quick start,
+      workspace visibility modes, safety/privacy boundaries, selected-agent caveats,
+      developer workflow, verification, contribution, and release limitations. Keep
+      claims tied to observed implementation and link to the detailed lifecycle,
+      generated-file, support, verification, plan, and TODO references.
+- [x] **8C.2 Expand project Git hygiene**: add focused `.gitignore` entries for
+      local `PLAN.md`/`TODO.md`, selected native agent entry files/rules, RepoCharter
+      state, secrets, environment files, generated packages, logs, coverage, editor,
+      and OS artifacts while retaining public `AGENTS.md` and `.env.example`. Do not
+      run Git untracking commands; document that existing tracked files remain tracked
+      until the developer explicitly migrates them.
+- [x] **8C.3 Verify docs, hygiene, and package boundaries**: passed `npm run lint`,
+      `npm test` (45/45), `npm pack --dry-run --json` (52 public package files),
+      `git diff --check`, and `git check-ignore -v --no-index` for local planning,
+      selected adapters/rules, RepoCharter state, environment files, and `.env.example`.
+      The rewritten README states no verified agent, cross-platform, or publication
+      claim beyond observed evidence.
+
+**Phase gate: PASSED**: README claims, project ignore policy, 45/45 tests, 52-file
+package contents, and Git-diff/ignore checks were observed. Existing tracked files
+remain tracked by design; RepoCharter did not run Git untracking commands.
+
+- [x] **8C.4 Add the GitHub Copilot adapter example**: added
+      `examples/.github/copilot-instructions.md` with the exact same repository
+      operating rules as `examples/GEMINI.md`. Verified presence and byte-identical
+      shared content with `node --test tests/docs.test.js`; package curation and
+      unrelated examples remain unchanged.
+
+---
+
 ## Phase 8B: Preview release acceptance
 
-> Goal: Verify and publish the corrected two-mode workspace preview only after Phase
-> 8A has passed.
+> Goal: Verify and publish the corrected two-mode workspace preview only after Phases
+> 8A and 8C have passed.
 
 - [ ] **8.7 Run clean cross-platform installation**: install the packed artifact in
       clean Windows, macOS, and Linux environments and complete new- and existing-

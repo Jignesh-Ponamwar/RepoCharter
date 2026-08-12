@@ -6,9 +6,20 @@ node_modules/
 coverage/
 .nyc_output/
 
-# RepoCharter local state and atomic-write remnants
+# RepoCharter local state, planning workspace, and atomic-write remnants
 .repo-charter/
 .*.repo-charter-*.tmp
+PLAN.md
+TODO.md
+
+# Local agent-specific entry points and rules (AGENTS.md stays public)
+CLAUDE.md
+GEMINI.md
+.github/copilot-instructions.md
+.claude/rules/
+.cursor/rules/
+.windsurf/rules/
+.codex/
 
 # Logs
 *.log
@@ -21,6 +32,12 @@ pnpm-debug.log*
 .env
 .env.*
 !.env.example
+.envrc
+*.pem
+*.key
+*.p12
+*.pfx
+*.crt
 
 # Editor and operating-system files
 .idea/

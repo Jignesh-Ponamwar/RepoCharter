@@ -19,6 +19,11 @@ test('preview documentation, examples, and release record state verified limits 
   const generated = await readFile('examples/generated-AGENTS.example.md', 'utf8');
   assert.ok(generated.split('\n').length >= 150);
   assert.match(generated, /Fictional generated example/);
+  assert.equal(
+    await readFile('examples/.github/copilot-instructions.md', 'utf8'),
+    await readFile('examples/GEMINI.md', 'utf8'),
+    'The Copilot example must retain the shared adapter rules verbatim.',
+  );
 });
 
 test('package metadata includes runtime plus required preview documentation assets', async () => {
