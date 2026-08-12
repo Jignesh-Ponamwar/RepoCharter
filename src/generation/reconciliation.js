@@ -3,6 +3,8 @@ import { writeFileAtomically } from '../filesystem/atomic.js';
 import { resolveSafeChildPath } from '../filesystem/paths.js';
 import { createManagedArtifact, createOwnershipDocument, hashContent, verifyOwnershipDocument } from '../ownership.js';
 import { OWNERSHIP_PATH } from '../foundation.js';
+import { reconcileIgnoreContent } from '../visibility/ignore.js';
+import { getWorkspacePolicy } from '../visibility/policy.js';
 
 const SAFE_STATUSES = new Set(['missing', 'owned-current']);
 const CONFLICT_STATUSES = new Set(['owned-modified', 'merge-required']);
@@ -59,7 +61,29 @@ export async function previewDocumentChanges(targetPath, generatedDocuments) {
     const current = await currentArtifact(targetPath, generated.path);
     const managed = ownership.artifacts?.find((artifact) => artifact.path === generated.path);
     const classified = classify(generated, current, managed);
-    changes.push({ ...classified, content: generated.content, templateVersion: generated.templateVersion });
+    changes.push({ ...classified, content: generated.content, templateVersion: generated.templateVersion, visibility: generated.visibility ?? 'unmanaged' });
+  }
+
+  const metadata = generatedDocuments[0];
+  if (metadata?.workspaceVisibility && metadata.selectedAgents) {
+    const policy = getWorkspacePolicy(metadata.workspaceVisibility, metadata.selectedAgents);
+    for (const path of ['.gitignore', '.npmignore']) {
+      const current = await currentArtifact(targetPath, path);
+      if (path === '.npmignore' && current.status === 'missing') continue;
+      if (current.status === 'blocked') {
+        changes.push({ path, status: 'blocked', reason: current.reason, permittedActions: [], visibility: 'public' });
+        continue;
+      }
+      const ignored = reconcileIgnoreContent(current.status === 'present' ? current.content : undefined, policy.localArtifacts);
+      if (ignored.status === 'blocked') {
+        changes.push({ path, status: 'blocked', reason: ignored.reason, permittedActions: [], visibility: 'public' });
+        continue;
+      }
+      const generated = { path, content: ignored.content, templateVersion: 1 };
+      const managed = ownership.artifacts?.find((artifact) => artifact.path === path);
+      const classified = classify(generated, current, managed);
+      changes.push({ ...classified, content: ignored.content, templateVersion: 1, visibility: 'public', kind: 'ignore-policy' });
+    }
   }
   if (ownership.error) {
     changes.push({ path: OWNERSHIP_PATH, status: 'blocked', reason: `Ownership state is invalid: ${ownership.error}`, permittedActions: [] });
@@ -72,8 +96,8 @@ function approvalFor(approvals, path) {
 }
 
 export function summarizeDocumentPreview(preview) {
-  const changes = preview.changes.map(({ path, status, reason, permittedActions }) => ({
-    path, status, reason, permittedActions,
+  const changes = preview.changes.map(({ path, status, reason, permittedActions, visibility }) => ({
+    path, status, reason, permittedActions, visibility,
   }));
   return {
     changes,
@@ -84,7 +108,7 @@ export function summarizeDocumentPreview(preview) {
 
 export function formatDocumentPreview(preview) {
   return summarizeDocumentPreview(preview).changes
-    .map((change) => `${change.status}: ${change.path} — ${change.reason}`)
+    .map((change) => `${change.status}: ${change.path} (${change.visibility ?? 'unmanaged'}) — ${change.reason}`)
     .join('\n');
 }
 

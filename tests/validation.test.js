@@ -7,11 +7,12 @@ import { run, main } from '../src/cli.js';
 import { generateSelectedAgentDocuments } from '../src/adapters/planning.js';
 import { applyApprovedDocumentChanges, previewDocumentChanges } from '../src/generation/reconciliation.js';
 import { inspectRepository } from '../src/inspection/index.js';
-import { readSessionManifest, recordObservedCheck, writeSessionManifest } from '../src/session/manifest.js';
+import { readSessionManifest, recordObservedCheck, setWorkspaceVisibility, writeSessionManifest } from '../src/session/manifest.js';
 
 function specification() {
   return {
     selectedAgents: { primary: 'codex', secondary: [] },
+    workspaceVisibility: 'local-planning',
     verificationDepth: 'static',
     confirmedDecisions: {},
   };
@@ -48,6 +49,25 @@ test('check is read-only, returns warnings separately, and emits an exact next-t
     await main(['check', target], io);
     assert.match(stdout, /Final change report:/);
     assert.match(stdout, /Next approved task: 1\.1 Implement core workflow/);
+  } finally {
+    await rm(target, { recursive: true, force: true });
+  }
+});
+
+test('check validates the selected workspace mode without making Git tracking claims', async () => {
+  const target = await temporaryRepository();
+  try {
+    await generatedSetup(target);
+    const manifest = await readSessionManifest(target);
+    await writeSessionManifest(target, setWorkspaceVisibility(manifest, 'local-planning'));
+    const checked = await run(['check'], target);
+    assert.ok(!checked.output.diagnostics.some((item) => item.category === 'visibility' && item.severity === 'error'));
+    await writeFile(path.join(target, 'package.json'), JSON.stringify({ files: ['PLAN.md'] }));
+    const packageRisk = await run(['check'], target);
+    assert.ok(packageRisk.output.diagnostics.some((item) => /files allowlist may publish local artifact: PLAN.md/.test(item.message)));
+    await writeFile(path.join(target, '.gitignore'), '# user-owned replacement\n');
+    const missingPolicy = await run(['check'], target);
+    assert.ok(missingPolicy.output.diagnostics.some((item) => item.category === 'visibility' && /ignore block is missing/.test(item.message)));
   } finally {
     await rm(target, { recursive: true, force: true });
   }

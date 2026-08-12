@@ -7,7 +7,7 @@ const requiredDocs = {
   'docs/generated-files.md': ['## Ownership classification', '## Recovery', 'merge-required'],
   'docs/agent-support.md': ['no behavior-verified agent support', 'What a behavior evaluation must prove'],
   'CONTRIBUTING.md': ['## Requirements', '## Compatibility research and evaluation'],
-  'docs/verification-status.md': ['Not observed in this session', 'npm registry lookup'],
+  'docs/verification-status.md': ['Not observed in this session', 'npm registry/package identity'],
   'examples/initialization-output.example.md': ['fictional, annotated composite', 'merge-required', 'nextTask'],
 };
 

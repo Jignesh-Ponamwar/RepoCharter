@@ -8,6 +8,7 @@ const observedEvidence = [{ fact: 'language', value: 'JavaScript', classificatio
 
 function completeDecisions() {
   return {
+    'workspace-visibility': 'local-planning',
     'project-goal': 'Help employees submit and resolve internal support requests.',
     'users-outcomes': 'Employees submit requests; agents resolve requests; admins manage assignments.',
     'current-pain': 'Requests are currently lost in unstructured chat channels.',
@@ -28,27 +29,27 @@ function completeDecisions() {
 
 test('decision frontier asks every unblocked decision in rounds and skips observed repository facts', () => {
   const initial = buildDecisionFrontier({ evidence: observedEvidence, decisions: {} });
-  assert.deepEqual(initial.map((question) => question.id), ['project-goal']);
+  assert.deepEqual(initial.map((question) => question.id), ['workspace-visibility', 'project-goal']);
 
   const afterGoal = buildDecisionFrontier({
     evidence: observedEvidence,
     decisions: { 'project-goal': 'Give employees a reliable support workflow.' },
   });
-  assert.deepEqual(afterGoal.map((question) => question.id), ['users-outcomes', 'current-pain']);
+  assert.deepEqual(afterGoal.map((question) => question.id), ['workspace-visibility', 'users-outcomes', 'current-pain']);
   const formatted = formatFrontierQuestions(afterGoal);
-  assert.match(formatted, /❓ \*\*Q1\*\* - \*\*Users and outcomes\*\*/);
+  assert.match(formatted, /❓ \*\*Q1\*\* - \*\*Planning workspace visibility\*\*/);
   assert.match(formatted, /➡️/);
 });
 
 test('greenfield and existing-undocumented evaluations ask only the applicable frontier', () => {
   const greenfield = buildDecisionFrontier({ evidence: [], decisions: {} });
-  assert.deepEqual(greenfield.map((question) => question.id), ['current-project-state', 'project-goal']);
+  assert.deepEqual(greenfield.map((question) => question.id), ['workspace-visibility', 'current-project-state', 'project-goal']);
 
   const existingUndocumented = buildDecisionFrontier({
     evidence: [{ fact: 'repository-boundary', value: 'src', classification: 'observed' }],
     decisions: {},
   });
-  assert.deepEqual(existingUndocumented.map((question) => question.id), ['project-goal']);
+  assert.deepEqual(existingUndocumented.map((question) => question.id), ['workspace-visibility', 'project-goal']);
 });
 
 test('conflicting-documentation and future-scope evaluations prevent premature shared understanding', () => {
@@ -77,6 +78,7 @@ test('shared understanding requires explicit approval and produces a safe approv
   const specification = createApprovedSpecification({
     sharedUnderstanding: confirmed,
     selectedAgents: { primary: 'codex', secondary: ['claude-code'] },
+    workspaceVisibility: 'local-planning',
     verificationDepth: 'approved-checks',
     proposedArtifacts: [
       { path: 'AGENTS.md', action: 'create' },
@@ -88,7 +90,8 @@ test('shared understanding requires explicit approval and produces a safe approv
 
   assert.equal(specification.developerApproval, true);
   assert.equal(specification.verificationDepth, 'approved-checks');
-  assert.match(serializeApprovedSpecification(specification), /"schemaVersion": 1/);
+  assert.equal(specification.workspaceVisibility, 'local-planning');
+  assert.match(serializeApprovedSpecification(specification), /"schemaVersion": 2/);
 });
 
 test('approved specifications reject transcript-bearing decisions and unapproved input', () => {
@@ -100,11 +103,14 @@ test('approved specifications reject transcript-bearing decisions and unapproved
   const input = {
     sharedUnderstanding: unsafeShared,
     selectedAgents: { primary: 'codex', secondary: [] },
+    workspaceVisibility: 'local-planning',
     verificationDepth: 'static',
     proposedArtifacts: [],
     conflictDecisions: {},
     developerApproval: true,
   };
   assert.throws(() => createApprovedSpecification(input), /forbidden field: rawTranscript/);
+  assert.throws(() => createApprovedSpecification({ ...input, workspaceVisibility: 'shared-planning' }), /must match the confirmed/);
+  assert.throws(() => createApprovedSpecification({ ...input, workspaceVisibility: 'unknown' }), /requires workspaceVisibility/);
   assert.throws(() => createApprovedSpecification({ ...input, sharedUnderstanding: { ...unsafeShared, developerConfirmed: false } }), /requires explicit developer confirmation/);
 });

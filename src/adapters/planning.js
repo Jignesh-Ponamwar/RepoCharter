@@ -1,6 +1,7 @@
 import { generateCanonicalDocuments } from '../generation/documents.js';
 import { findAgent } from '../session/agents.js';
 import { claudeAdapter, copilotAdapter, geminiAdapter, ADAPTER_TEMPLATE_VERSION } from './templates.js';
+import { artifactVisibility, getWorkspacePolicy } from '../visibility/policy.js';
 
 const ADAPTERS = Object.freeze({
   'claude-code': { path: 'CLAUDE.md', content: claudeAdapter },
@@ -12,8 +13,9 @@ export function selectedAgentIds(selectedAgents) {
   return [selectedAgents.primary, ...selectedAgents.secondary];
 }
 
-export function planSelectedAgentOutputs(selectedAgents) {
+export function planSelectedAgentOutputs(selectedAgents, workspaceVisibility = 'local-planning') {
   const agents = selectedAgentIds(selectedAgents);
+  const policy = getWorkspacePolicy(workspaceVisibility, selectedAgents);
   const artifacts = [];
   for (const agentId of agents) {
     if (!findAgent(agentId)) throw new Error(`Unsupported selected agent: ${agentId}.`);
@@ -22,9 +24,12 @@ export function planSelectedAgentOutputs(selectedAgents) {
       artifacts.push({
         agentId,
         path: adapter.path,
-        content: adapter.content(),
+        content: adapter.content(workspaceVisibility),
         templateVersion: ADAPTER_TEMPLATE_VERSION,
         kind: 'native-adapter',
+        visibility: artifactVisibility(policy, adapter.path),
+        workspaceVisibility,
+        selectedAgents,
       });
     }
   }
@@ -32,13 +37,14 @@ export function planSelectedAgentOutputs(selectedAgents) {
     canonicalPath: 'AGENTS.md',
     artifacts,
     optionalRuleDirectories: [],
+    policy,
   };
 }
 
 export function generateSelectedAgentDocuments(specification, inspection) {
   const selectedAgents = specification.selectedAgents;
   if (!selectedAgents) throw new Error('Selected agents are required to generate native adapters.');
-  return [...generateCanonicalDocuments(specification, inspection), ...planSelectedAgentOutputs(selectedAgents).artifacts];
+  return [...generateCanonicalDocuments(specification, inspection), ...planSelectedAgentOutputs(selectedAgents, specification.workspaceVisibility).artifacts];
 }
 
 export function expectedInstructionPaths(selectedAgents) {

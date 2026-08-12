@@ -1,5 +1,6 @@
 import { redactSensitiveText } from '../inspection/redaction.js';
 import { PACKAGE_VERSION } from '../version.js';
+import { isWorkspaceVisibility } from '../workspace-visibility.js';
 
 const FORBIDDEN_KEY = /(?:transcript|conversation|credential|token|secret|source(?:Body|Content))/i;
 const VERIFICATION_DEPTHS = new Set(['static', 'approved-checks', 'full']);
@@ -20,12 +21,18 @@ function assertSafeValue(value) {
   }
 }
 
-export function createApprovedSpecification({ sharedUnderstanding, selectedAgents, verificationDepth, proposedArtifacts, conflictDecisions, developerApproval }) {
+export function createApprovedSpecification({ sharedUnderstanding, selectedAgents, workspaceVisibility, verificationDepth, proposedArtifacts, conflictDecisions, developerApproval }) {
   if (!sharedUnderstanding?.developerConfirmed || developerApproval !== true) {
     throw new Error('An approved specification requires explicit developer confirmation of shared understanding.');
   }
   if (!selectedAgents?.primary || !Array.isArray(selectedAgents.secondary)) {
     throw new Error('Approved specification requires selected agents.');
+  }
+  if (!isWorkspaceVisibility(workspaceVisibility)) {
+    throw new Error('Approved specification requires workspaceVisibility to be local-planning or shared-planning.');
+  }
+  if (sharedUnderstanding.settledDecisions['workspace-visibility'] !== workspaceVisibility) {
+    throw new Error('Approved specification workspaceVisibility must match the confirmed workspace-visibility decision.');
   }
   if (!VERIFICATION_DEPTHS.has(verificationDepth)) {
     throw new Error('Approved specification has an unsupported verification depth.');
@@ -38,9 +45,10 @@ export function createApprovedSpecification({ sharedUnderstanding, selectedAgent
   }
 
   const specification = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     packageVersion: PACKAGE_VERSION,
     selectedAgents: { primary: selectedAgents.primary, secondary: [...selectedAgents.secondary] },
+    workspaceVisibility,
     confirmedDecisions: sharedUnderstanding.settledDecisions,
     verificationDepth,
     proposedArtifacts,

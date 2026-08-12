@@ -1,5 +1,12 @@
 const DECISIONS = Object.freeze([
   {
+    id: 'workspace-visibility',
+    title: 'Planning workspace visibility',
+    dependsOn: [],
+    question: 'Should RepoCharter keep the active plan, task ledger, selected agent adapters, and selected rules local to this clone, or commit them for every developer and agent who clones the repository?',
+    recommendation: 'Choose `local-planning` to keep active planning and agent configuration private, or `shared-planning` to commit shared planning documents and selected adapters. `.repo-charter/`, credentials, secret-bearing environment files, and machine-specific state stay local in both modes.',
+  },
+  {
     id: 'current-project-state',
     title: 'Current project state',
     dependsOn: [],

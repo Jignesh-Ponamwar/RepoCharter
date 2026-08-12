@@ -37,6 +37,7 @@ test('skill workflow calls shared deterministic preview code without duplicating
     await writeFile(path.join(target, 'package.json'), JSON.stringify({ scripts: { test: 'node --test' } }));
     await writeFile(specificationPath, JSON.stringify({
       selectedAgents: { primary: 'claude-code', secondary: ['gemini-cli'] },
+      workspaceVisibility: 'local-planning',
       verificationDepth: 'static',
       confirmedDecisions: {},
     }));
@@ -47,7 +48,7 @@ test('skill workflow calls shared deterministic preview code without duplicating
     const output = JSON.parse(result.stdout);
     assert.equal(output.type, 'preview');
     assert.deepEqual(output.preview.changes.map((change) => change.path), [
-      'AGENTS.md', 'PLAN.md', 'TODO.md', 'CLAUDE.md', 'GEMINI.md',
+      'AGENTS.md', 'PLAN.md', 'TODO.md', 'CLAUDE.md', 'GEMINI.md', '.gitignore',
     ]);
     assert.ok(output.summary.requiresPerFileDecision === false);
   } finally {

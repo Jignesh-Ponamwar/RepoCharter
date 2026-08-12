@@ -3,6 +3,7 @@ import { resolveTargetDirectory } from '../../../src/filesystem/paths.js';
 import { inspectRepository } from '../../../src/inspection/index.js';
 import { generateSelectedAgentDocuments } from '../../../src/adapters/planning.js';
 import { applyApprovedDocumentChanges, previewDocumentChanges, summarizeDocumentPreview } from '../../../src/generation/reconciliation.js';
+import { readSessionManifest, setWorkspaceVisibility, writeSessionManifest } from '../../../src/session/manifest.js';
 
 async function jsonFile(filePath) {
   return JSON.parse(await readFile(filePath, 'utf8'));
@@ -27,6 +28,8 @@ export async function runWorkflow(argumentsList, cwd = process.cwd()) {
   }
   const approvals = await jsonFile(approvalsPath);
   const application = await applyApprovedDocumentChanges(target, proposal, approvals);
+  const session = await readSessionManifest(target);
+  if (session) await writeSessionManifest(target, setWorkspaceVisibility(session, specification.workspaceVisibility));
   return { type: 'apply', summary: summarizeDocumentPreview(proposal), application };
 }
 

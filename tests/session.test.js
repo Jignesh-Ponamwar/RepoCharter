@@ -6,7 +6,7 @@ import test from 'node:test';
 import { run } from '../src/cli.js';
 import { AGENT_REGISTRY, selectAgents } from '../src/session/agents.js';
 import { createPlanningHandoff } from '../src/session/handoff.js';
-import { createSessionManifest, readSessionManifest, transitionSession, writeSessionManifest } from '../src/session/manifest.js';
+import { createSessionManifest, readSessionManifest, setWorkspaceVisibility, transitionSession, writeSessionManifest } from '../src/session/manifest.js';
 import { inspectionSnapshot } from '../src/session/snapshot.js';
 import { inspectRepository } from '../src/inspection/index.js';
 
@@ -50,6 +50,7 @@ test('new init requires and persists a valid primary agent without persisting so
     const manifest = JSON.parse(persisted);
     assert.deepEqual(manifest.selectedAgents, { primary: 'codex', secondary: ['claude-code'] });
     assert.equal(manifest.stage, 'handoff-ready');
+    assert.equal(manifest.workspaceVisibility, null);
     assert.ok(Array.isArray(manifest.repositorySnapshot.files));
     assert.ok(!/"content"\s*:/.test(persisted));
   } finally {
@@ -99,6 +100,29 @@ test('manifest validation rejects corrupt or transcript-bearing state without ex
   }
 });
 
+test('workspace visibility remains unset until confirmed and migrates prior local state without inference', async () => {
+  const target = await temporaryDirectory();
+
+  try {
+    const inspection = await inspectRepository(target);
+    const manifest = createSessionManifest({ primary: 'codex', secondary: [] }, inspectionSnapshot(inspection));
+    assert.equal(manifest.workspaceVisibility, null);
+    const confirmed = setWorkspaceVisibility(manifest, 'shared-planning');
+    assert.equal(confirmed.workspaceVisibility, 'shared-planning');
+    assert.throws(() => setWorkspaceVisibility(manifest, 'public'), /must be local-planning or shared-planning/);
+
+    await mkdir(path.join(target, '.repo-charter'));
+    const legacy = { ...manifest, schemaVersion: 1 };
+    delete legacy.workspaceVisibility;
+    await writeFile(path.join(target, '.repo-charter', 'manifest.json'), `${JSON.stringify(legacy)}\n`);
+    const migrated = await readSessionManifest(target);
+    assert.equal(migrated.schemaVersion, 2);
+    assert.equal(migrated.workspaceVisibility, null);
+  } finally {
+    await removeDirectory(target);
+  }
+});
+
 test('stage transitions and resume remain safe from every valid persisted stage', async () => {
   const target = await temporaryDirectory();
 
@@ -124,6 +148,7 @@ test('stage transitions and resume remain safe from every valid persisted stage'
 
     const handoff = createPlanningHandoff(baseManifest, inspection);
     assert.match(handoff, /developer explicitly confirms/);
+    assert.match(handoff, /local-planning/);
     assert.match(handoff, /Do not persist raw conversation transcripts/);
   } finally {
     await removeDirectory(target);

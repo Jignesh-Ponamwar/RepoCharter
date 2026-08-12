@@ -153,3 +153,9 @@ Assumptions and open questions: Identity subjects are stable; no unresolved impl
 Agent compatibility remains unverified until a later compatibility evaluation records observed behavior.
 This contract describes approved intent; it does not claim that planned capabilities are already implemented.
 
+## Workspace visibility
+
+This fictional example uses `shared-planning`: `AGENTS.md`, `PLAN.md`, `TODO.md`, and
+selected agent adapters are committed. `.repo-charter/`, credentials, environment
+files containing secrets, and machine-specific state remain local.
+

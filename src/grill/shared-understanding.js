@@ -1,5 +1,6 @@
 import { redactValue } from '../inspection/redaction.js';
 import { buildDecisionFrontier, missingDecisionIds } from './decision-tree.js';
+import { isWorkspaceVisibility } from '../workspace-visibility.js';
 
 function list(value) {
   if (Array.isArray(value)) return value.map(String);
@@ -29,6 +30,9 @@ export function detectDecisionIssues(decisions) {
   }
   if (list(decisions['future-scope']).length > 0 && !decisions['architecture-constraints']) {
     issues.push({ severity: 'error', id: 'future-scope-without-architecture', message: 'Future scope affects present architecture before architecture constraints are settled.' });
+  }
+  if (!isWorkspaceVisibility(decisions['workspace-visibility'])) {
+    issues.push({ severity: 'error', id: 'invalid-workspace-visibility', message: 'workspace-visibility must be local-planning or shared-planning.' });
   }
   if (decisions.completionClaim && !decisions['quality-verification']) {
     issues.push({ severity: 'error', id: 'unverifiable-completion', message: 'A completion claim has no verification decision.' });

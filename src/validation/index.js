@@ -3,6 +3,8 @@ import { diagnoseAdapterCompatibility } from '../adapters/diagnostics.js';
 import { expectedInstructionPaths } from '../adapters/planning.js';
 import { OWNERSHIP_PATH } from '../foundation.js';
 import { hashContent, verifyOwnershipDocument } from '../ownership.js';
+import { managedIgnorePaths } from '../visibility/ignore.js';
+import { getWorkspacePolicy } from '../visibility/policy.js';
 
 async function readIfPresent(targetPath, relativePath) {
   try {
@@ -25,8 +27,14 @@ function validateDocumentContracts(files, session) {
   const diagnostics = [];
   const required = session && ['applied', 'validated'].includes(session.stage);
   const missingSeverity = required ? 'error' : 'warning';
-  for (const path of ['AGENTS.md', 'PLAN.md', 'TODO.md']) {
+  const requiredPaths = session?.workspaceVisibility === 'local-planning' ? ['AGENTS.md'] : ['AGENTS.md', 'PLAN.md', 'TODO.md'];
+  for (const path of requiredPaths) {
     if (files[path] === undefined) diagnostics.push(diagnostic(missingSeverity, `Generated contract is missing: ${path}.`, 'documents'));
+  }
+  if (session?.workspaceVisibility === 'local-planning') {
+    for (const path of ['PLAN.md', 'TODO.md']) {
+      if (files[path] === undefined) diagnostics.push(diagnostic('warning', `Local planning artifact is absent: ${path}. Initialize or resume RepoCharter before scoped work.`, 'documents'));
+    }
   }
   if (files['AGENTS.md']) {
     for (const marker of ['Required planning workflow', 'PLAN.md', 'TODO.md', 'Verification']) {
@@ -73,6 +81,37 @@ async function ownershipDiagnostics(targetPath) {
   return diagnostics;
 }
 
+async function visibilityDiagnostics(targetPath, session) {
+  if (!session?.workspaceVisibility) return [diagnostic('warning', 'Workspace visibility is not confirmed yet.', 'visibility')];
+  const policy = getWorkspacePolicy(session.workspaceVisibility, session.selectedAgents);
+  const content = await readIfPresent(targetPath, '.gitignore');
+  const managed = managedIgnorePaths(content);
+  if (!managed) return [diagnostic('error', 'RepoCharter workspace-visibility ignore block is missing.', 'visibility')];
+  const diagnostics = [];
+  for (const path of policy.localArtifacts) {
+    if (!managed.includes(path)) diagnostics.push(diagnostic('error', `Local artifact is missing managed ignore coverage: ${path}.`, 'visibility'));
+  }
+  for (const path of policy.publicArtifacts) {
+    if (managed.includes(path)) diagnostics.push(diagnostic('error', `Public artifact is incorrectly ignored by the managed block: ${path}.`, 'visibility'));
+  }
+  return diagnostics;
+}
+
+async function packageVisibilityDiagnostics(targetPath, session) {
+  if (session?.workspaceVisibility !== 'local-planning') return [];
+  const content = await readIfPresent(targetPath, 'package.json');
+  if (!content) return [];
+  try {
+    const manifest = JSON.parse(content);
+    if (!Array.isArray(manifest.files)) return [];
+    const policy = getWorkspacePolicy(session.workspaceVisibility, session.selectedAgents);
+    const included = policy.localArtifacts.filter((path) => manifest.files.includes(path) || manifest.files.includes(path.replace(/\/$/, '')) || manifest.files.includes('**'));
+    return included.map((path) => diagnostic('warning', `package.json files allowlist may publish local artifact: ${path}.`, 'visibility'));
+  } catch {
+    return [diagnostic('warning', 'package.json could not be parsed for local artifact publication risks.', 'visibility')];
+  }
+}
+
 async function adapterDiagnostics(targetPath, inspection, session) {
   if (!session || (!['applied', 'validated'].includes(session.stage) && !inspection.repository.agentSurfaces.some((surface) => surface.path === 'AGENTS.md'))) return [];
   const files = {};
@@ -103,6 +142,8 @@ export async function validateRepositorySetup(targetPath, inspection, session) {
   const files = Object.fromEntries(await Promise.all(['AGENTS.md', 'PLAN.md', 'TODO.md'].map(async (path) => [path, await readIfPresent(targetPath, path)])));
   const diagnostics = [
     ...await ownershipDiagnostics(targetPath),
+    ...await visibilityDiagnostics(targetPath, session),
+    ...await packageVisibilityDiagnostics(targetPath, session),
     ...await adapterDiagnostics(targetPath, inspection, session),
     ...validateDocumentContracts(files, session),
     ...staleFactDiagnostics(files, inspection),

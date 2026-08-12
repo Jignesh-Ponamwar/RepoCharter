@@ -20,6 +20,13 @@ The native discovery sources, import/precedence limitations, and required future
 verification method are recorded in
 [agent-instruction-surfaces.md](./research/agent-instruction-surfaces.md).
 
+## Workspace visibility
+
+Selected native adapters are local-only in `local-planning` and committed in
+`shared-planning`. Behavior evaluation must test the selected mode: local adapters
+must request initialization when local planning is absent, while shared adapters must
+read committed `PLAN.md` and `TODO.md`.
+
 ## What a behavior evaluation must prove
 
 For a target to become supported, a fresh isolated context must demonstrate that it can:

@@ -228,6 +228,14 @@ invariants, multi-agent coordination, handoff expectations, and completion evide
 `PLAN.md` will record approved scope and durable decisions. `TODO.md` will identify
 the next approved work and retain only observed completion evidence.
 
+## Workspace visibility
+
+RepoCharter asks the developer whether planning is `local-planning` or
+`shared-planning`. In both modes, `AGENTS.md` is public and `.repo-charter/` remains
+local. Local planning keeps `PLAN.md`, `TODO.md`, and selected adapters/rules ignored;
+shared planning commits them for collaborators and agents who clone the repository.
+All ignore changes are previewed, and RepoCharter never untracks files automatically.
+
 ## Repository layout
 
 ```text

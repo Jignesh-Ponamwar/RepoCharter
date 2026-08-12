@@ -10,6 +10,7 @@ import { inspectRepository } from '../src/inspection/index.js';
 function specification() {
   return {
     selectedAgents: { primary: 'codex', secondary: ['claude-code'] },
+    workspaceVisibility: 'local-planning',
     confirmedDecisions: {
       'project-goal': 'Give support teams a reliable request workflow.',
       'users-outcomes': 'Employees create requests, agents resolve them, and administrators manage access.',
@@ -56,7 +57,8 @@ test('canonical document generation is project-specific, traceable, and within t
     assert.ok(agents.split('\n').length >= 150 && agents.split('\n').length <= 250);
     assert.match(agents, /Give support teams a reliable request workflow/);
     assert.match(agents, /npm run lint/);
-    assert.match(agents, /Read `PLAN.md`/);
+    assert.match(agents, /If local `PLAN.md` exists/);
+    assert.match(agents, /local-planning/);
     assert.match(agents, /Selected collaboration agents: codex, claude-code/);
     assert.match(plan, /intended behavior/);
     assert.match(plan, /Create, assign, and resolve support requests/);
@@ -71,21 +73,22 @@ test('empty fixtures apply approved safe documents atomically and an unchanged s
   const target = await temporaryRepository();
   try {
     const preview = await previewDocumentChanges(target, await documentsFor(target));
-    assert.deepEqual(preview.changes.map((change) => change.status), ['missing', 'missing', 'missing']);
+    assert.deepEqual(preview.changes.map((change) => change.status), ['missing', 'missing', 'missing', 'missing']);
+    assert.deepEqual(preview.changes.map((change) => change.path), ['AGENTS.md', 'PLAN.md', 'TODO.md', '.gitignore']);
     assert.match(formatDocumentPreview(preview), /missing: AGENTS.md/);
     const summary = summarizeDocumentPreview(preview);
     assert.deepEqual(summary.blocked, []);
     assert.doesNotThrow(() => JSON.stringify(summary));
 
     const applied = await applyApprovedDocumentChanges(target, preview, { approveSafe: true });
-    assert.deepEqual(applied.results.map((result) => result.status), ['created', 'created', 'created']);
+    assert.deepEqual(applied.results.map((result) => result.status), ['created', 'created', 'created', 'created']);
     assert.equal(applied.ownershipChanged, true);
     assert.match(await readFile(path.join(target, 'AGENTS.md'), 'utf8'), /Agent Collaboration Contract/);
 
     const secondPreview = await previewDocumentChanges(target, await documentsFor(target));
-    assert.deepEqual(secondPreview.changes.map((change) => change.status), ['owned-current', 'owned-current', 'owned-current']);
+    assert.deepEqual(secondPreview.changes.map((change) => change.status), ['owned-current', 'owned-current', 'owned-current', 'owned-current']);
     const secondApply = await applyApprovedDocumentChanges(target, secondPreview, { approveSafe: true });
-    assert.deepEqual(secondApply.results.map((result) => result.status), ['unchanged', 'unchanged', 'unchanged']);
+    assert.deepEqual(secondApply.results.map((result) => result.status), ['unchanged', 'unchanged', 'unchanged', 'unchanged']);
     assert.equal(secondApply.ownershipChanged, false);
   } finally {
     await rm(target, { recursive: true, force: true });

@@ -1,4 +1,4 @@
-export const DOCUMENT_TEMPLATE_VERSION = 1;
+export const DOCUMENT_TEMPLATE_VERSION = 2;
 
 function lines(...values) {
   return values.flatMap((value) => Array.isArray(value) ? value : [value]);
@@ -35,6 +35,7 @@ function evidencePaths(inspection, fact) {
 
 export function generateAgentsDocument(specification, inspection) {
   const decisions = specification.confirmedDecisions;
+  const workspaceVisibility = specification.workspaceVisibility;
   const selectedAgents = specification.selectedAgents
     ? [specification.selectedAgents.primary, ...(specification.selectedAgents.secondary ?? [])].filter(Boolean).join(', ')
     : 'not recorded';
@@ -43,6 +44,15 @@ export function generateAgentsDocument(specification, inspection) {
   const commands = commandLines(inspection);
   const linesOut = lines(
     '# Agent Collaboration Contract',
+    '',
+    '> Public RepoCharter repository contract. This file is intended to be committed.',
+    '',
+    '## Workspace visibility',
+    '',
+    workspaceVisibility === 'shared-planning'
+      ? 'This repository uses `shared-planning`: `PLAN.md`, `TODO.md`, and selected native agent adapters are committed shared planning artifacts. Read them before scoped work.'
+      : 'This repository uses `local-planning`: `PLAN.md`, `TODO.md`, and selected native agent adapters are local-only. If they are absent, ask the developer to initialize or resume RepoCharter; do not create or commit them without approval.',
+    '`.repo-charter/`, credentials, secret-bearing environment files, and machine-specific state remain local in every mode.',
     '',
     '## Purpose and current scope',
     '',
@@ -61,8 +71,12 @@ export function generateAgentsDocument(specification, inspection) {
     '## Required planning workflow',
     '',
     '1. Read this file before inspecting or changing implementation files.',
-    '2. Read `PLAN.md` for durable product and architecture decisions.',
-    '3. Read `TODO.md` to find the first relevant unchecked approved task.',
+    workspaceVisibility === 'shared-planning'
+      ? '2. Read committed `PLAN.md` for durable product and architecture decisions.'
+      : '2. If local `PLAN.md` exists, read it for durable product and architecture decisions; otherwise ask the developer to initialize or resume RepoCharter.',
+    workspaceVisibility === 'shared-planning'
+      ? '3. Read committed `TODO.md` to find the first relevant unchecked approved task.'
+      : '3. If local `TODO.md` exists, read it to find the first relevant unchecked approved task; otherwise do not invent planning state.',
     '4. Confirm the requested work is inside the approved plan and current phase.',
     '5. Inspect only the files needed for that task; do not assume undocumented behavior.',
     '6. Make the smallest change that satisfies the approved task.',
@@ -199,9 +213,10 @@ export function generateAgentsDocument(specification, inspection) {
 
 export function generatePlanDocument(specification, inspection) {
   const decisions = specification.confirmedDecisions;
+  const visibility = specification.workspaceVisibility === 'shared-planning' ? 'This is a committed shared-planning document.' : 'This is a local-only RepoCharter planning document. Do not commit or publish it.';
   const title = value(decisions, 'project-goal', 'Project').replace(/[.]+$/, '');
   const sections = [
-    ['# Implementation Plan', `${title}. This plan records approved intended behavior; observed repository evidence is not an implementation claim.`],
+    ['# Implementation Plan', visibility, `${title}. This plan records approved intended behavior; observed repository evidence is not an implementation claim.`],
     ['## 1. Stack decisions and repository evidence', `Observed languages: ${evidenceList(inspection, 'language', 'none detected')}.`, `Observed frameworks: ${evidenceList(inspection, 'framework', 'none detected')}.`, `Approved constraints: ${value(decisions, 'architecture-constraints')}`],
     ['## 2. Product scope', `Users and outcomes: ${value(decisions, 'users-outcomes')}`, `MVP boundary: ${value(decisions, 'mvp-boundary')}`, `Explicit exclusions: ${value(decisions, 'exclusions')}`],
     ['## 3. Architecture and workflows', `Core workflows: ${value(decisions, 'core-workflows')}`, `Domain rules: ${value(decisions, 'domain-rules')}`, 'Preserve observed repository boundaries unless an approved task changes them.'],
@@ -216,17 +231,19 @@ export function generatePlanDocument(specification, inspection) {
 
 export function generateTodoDocument(specification, inspection) {
   const decisions = specification.confirmedDecisions;
+  const visibility = specification.workspaceVisibility === 'shared-planning' ? 'This is a committed shared-planning document.' : 'This is a local-only RepoCharter planning document. Do not commit or publish it.';
   const observedCommands = inspection.commands.filter((command) => command.classification === 'observed');
   const baseline = observedCommands.length > 0
     ? observedCommands.map((command) => `- [x] **Observed command baseline**: \`${command.command}\` is a static inspection candidate from \`${command.source}\`; it has not been claimed as executed.`)
     : ['- [x] **Observed baseline**: No executable project command was inferred during static inspection.'];
-  return `# Project TODO\n\nTask tracker derived from [PLAN.md](./PLAN.md). Mark work complete only after implementation and observed verification.\n\n**Legend:** \`[ ]\` pending · \`[x]\` done\n\n---\n\n## Verified baseline\n\n${baseline.join('\n')}\n\n---\n\n## Phase 1: Core MVP workflow\n\n> Goal: deliver the approved MVP boundary: ${value(decisions, 'mvp-boundary')}\n\n- [ ] **1.1 Implement core workflow**: implement the approved workflow: ${value(decisions, 'core-workflows')}\n- [ ] **1.2 Enforce domain rules**: preserve these invariants: ${value(decisions, 'domain-rules')}\n\n**Phase gate: PENDING**: the MVP workflow and authorization-sensitive paths meet the verification expectations in \`PLAN.md\`.\n\n---\n\n## Phase 2: Data, security, and integrations\n\n> Goal: enforce approved data and external-system boundaries.\n\n- [ ] **2.1 Protect data and access**: implement ${value(decisions, 'data-security-privacy')}\n- [ ] **2.2 Integrate only approved systems**: implement or explicitly defer ${value(decisions, 'integrations')}\n\n**Phase gate: PENDING**: data, authorization, and integration behavior are verified at the approved depth.\n\n---\n\n## Phase 3: Operations and release verification\n\n> Goal: satisfy approved operational and quality requirements without introducing excluded scope.\n\n- [ ] **3.1 Prepare operations**: implement ${value(decisions, 'operations-deployment')}\n- [ ] **3.2 Run approved verification**: perform ${value(decisions, 'quality-verification')}\n\n**Phase gate: PENDING**: required checks are observed or blockers are recorded honestly.\n\n---\n\n## Open questions\n\n- [ ] **Confirm assumptions and blockers**: ${value(decisions, 'assumptions-open-questions')}\n`;
+  return `# Project TODO\n\n${visibility}\n\nTask tracker derived from [PLAN.md](./PLAN.md). Mark work complete only after implementation and observed verification.\n\n**Legend:** \`[ ]\` pending · \`[x]\` done\n\n---\n\n## Verified baseline\n\n${baseline.join('\n')}\n\n---\n\n## Phase 1: Core MVP workflow\n\n> Goal: deliver the approved MVP boundary: ${value(decisions, 'mvp-boundary')}\n\n- [ ] **1.1 Implement core workflow**: implement the approved workflow: ${value(decisions, 'core-workflows')}\n- [ ] **1.2 Enforce domain rules**: preserve these invariants: ${value(decisions, 'domain-rules')}\n\n**Phase gate: PENDING**: the MVP workflow and authorization-sensitive paths meet the verification expectations in \`PLAN.md\`.\n\n---\n\n## Phase 2: Data, security, and integrations\n\n> Goal: enforce approved data and external-system boundaries.\n\n- [ ] **2.1 Protect data and access**: implement ${value(decisions, 'data-security-privacy')}\n- [ ] **2.2 Integrate only approved systems**: implement or explicitly defer ${value(decisions, 'integrations')}\n\n**Phase gate: PENDING**: data, authorization, and integration behavior are verified at the approved depth.\n\n---\n\n## Phase 3: Operations and release verification\n\n> Goal: satisfy approved operational and quality requirements without introducing excluded scope.\n\n- [ ] **3.1 Prepare operations**: implement ${value(decisions, 'operations-deployment')}\n- [ ] **3.2 Run approved verification**: perform ${value(decisions, 'quality-verification')}\n\n**Phase gate: PENDING**: required checks are observed or blockers are recorded honestly.\n\n---\n\n## Open questions\n\n- [ ] **Confirm assumptions and blockers**: ${value(decisions, 'assumptions-open-questions')}\n`;
 }
 
 export function generateCanonicalDocuments(specification, inspection) {
+  const metadata = { workspaceVisibility: specification.workspaceVisibility, selectedAgents: specification.selectedAgents };
   return [
-    { path: 'AGENTS.md', content: generateAgentsDocument(specification, inspection), templateVersion: DOCUMENT_TEMPLATE_VERSION },
-    { path: 'PLAN.md', content: generatePlanDocument(specification, inspection), templateVersion: DOCUMENT_TEMPLATE_VERSION },
-    { path: 'TODO.md', content: generateTodoDocument(specification, inspection), templateVersion: DOCUMENT_TEMPLATE_VERSION },
+    { path: 'AGENTS.md', content: generateAgentsDocument(specification, inspection), templateVersion: DOCUMENT_TEMPLATE_VERSION, visibility: 'public', ...metadata },
+    { path: 'PLAN.md', content: generatePlanDocument(specification, inspection), templateVersion: DOCUMENT_TEMPLATE_VERSION, visibility: specification.workspaceVisibility === 'shared-planning' ? 'public' : 'local', ...metadata },
+    { path: 'TODO.md', content: generateTodoDocument(specification, inspection), templateVersion: DOCUMENT_TEMPLATE_VERSION, visibility: specification.workspaceVisibility === 'shared-planning' ? 'public' : 'local', ...metadata },
   ];
 }

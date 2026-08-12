@@ -1020,3 +1020,13 @@ Like a compiler, the deterministic layer should reject unsafe or ambiguous input
 rather than quietly producing an unreliable result. The coding agent supplies
 contextual reasoning, the developer approves intent, and the CLI guarantees that the
 approved result is applied and validated consistently.
+
+## 24. Workspace visibility modes
+
+RepoCharter always keeps `AGENTS.md` public. The developer chooses
+`local-planning` to keep `PLAN.md`, `TODO.md`, and selected adapters/rules in an
+ignored local workspace, or `shared-planning` to commit them for cloned-repository
+collaboration. `.repo-charter/`, credentials, secret-bearing environment files, and
+machine-specific state remain local in both modes. The choice is confirmed during the
+grill, not inferred from existing files; ignore changes are previewed and RepoCharter
+never untracks files automatically.

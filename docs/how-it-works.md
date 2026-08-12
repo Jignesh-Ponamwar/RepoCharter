@@ -47,6 +47,17 @@ The public CLI does not yet accept an approved specification directly. The skill
 workflow calls the same inspection, generation, preview, and application modules; it
 does not maintain a second implementation.
 
+## Workspace visibility
+
+Before generation, the developer confirms one mode:
+
+- `local-planning`: commit `AGENTS.md`; keep `PLAN.md`, `TODO.md`, selected adapters,
+  rules, and `.repo-charter/` local.
+- `shared-planning`: commit `AGENTS.md`, planning documents, and selected adapters;
+  keep `.repo-charter/` local.
+
+RepoCharter previews its managed ignore block and never automatically untracks files.
+
 ## Safety boundaries
 
 - Static inspection does not run installs, package scripts, migrations, services,

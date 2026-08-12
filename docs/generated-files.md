@@ -18,6 +18,14 @@ the selected agent through `AGENTS.md`, then `PLAN.md` and `TODO.md`. Codex, Cur
 Windsurf, and generic selections use the root contract alone by default. RepoCharter
 does not create optional rule directories without a confirmed scoped need.
 
+## Workspace visibility
+
+`AGENTS.md` is public in every setup. The developer selects `local-planning` to keep
+`PLAN.md`, `TODO.md`, selected adapters, and selected rules ignored locally, or
+`shared-planning` to commit them. `.repo-charter/` remains local in both modes.
+RepoCharter manages only its marked ignore block, previews every change, and never
+runs Git untracking commands.
+
 ## Ownership classification
 
 Before mutation, each proposed document is classified:

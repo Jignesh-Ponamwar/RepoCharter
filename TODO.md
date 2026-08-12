@@ -526,27 +526,160 @@ stale facts, redacted observed checks, exact final report data, and human/JSON o
       generated `AGENTS.md` plus at least one full initialization output showing
       evidence, conflicts, approvals, validation, and next-task reporting. Added a
       155-line fictional generated contract and clearly labeled composite workflow JSON.
-- [ ] **8.6 Verify package identity and contents**: confirm npm name availability,
+- [x] **8.6 Verify package identity and contents**: confirm npm name availability,
       package only runtime and required documentation assets, verify license and
-      metadata, and inspect the packed artifact contents. Local metadata/license and
-      curated 48-file artifact passed; unauthenticated `npm view repo-charter` returned
-      `E404`, which cannot prove name ownership or publication eligibility. Confirm with
-      an authenticated account before checking this task.
+      metadata, and inspect the packed artifact contents. An authenticated `npm whoami`
+      and `npm publish --dry-run --access public` accepted `repo-charter@0.1.0`; `npm
+      pack` and tar listing confirmed the curated 48-file artifact, metadata, MIT
+      license, runtime, skill, docs, and examples.
+
+**Phase gate: PENDING**: initial documentation and package preparation are complete,
+but the two-mode policy documented in Phase 8A must replace the superseded fixed
+shared-planning model before this preparation can count toward release acceptance.
+
+---
+
+## Phase 8A: Workspace visibility modes
+
+> Goal: Let the developer explicitly choose a safe private local workspace or a
+> committed shared planning workspace while always keeping `AGENTS.md` public and
+> `.repo-charter/` private before preview publication.
+
+- [x] **8A.1 Add the confirmed workspace-visibility decision**: extend the grill,
+      shared-understanding summary, approved setup specification, and safe session
+      schema with a required developer-confirmed `workspaceVisibility` value:
+      `local-planning` (recommended for private active planning) or
+      `shared-planning` (for committed shared planning). It is never inferred from
+      existing files; new sessions keep it `null` until confirmed, and schema-v1 local
+      manifests migrate to that unset state. Verified `npm run lint`, `npm test`
+      (42/42), and `git diff --check`.
+- [x] **8A.2 Implement a single mode-aware artifact-visibility policy**: add a focused
+      `src/visibility/` module that derives public/local artifact classification from
+      `workspaceVisibility` and selected agents. `AGENTS.md` is always public;
+      `.repo-charter/`, credentials, secret-bearing environment files, and
+      machine-specific state are always local. `PLAN.md`, `TODO.md`, selected native
+      adapters, and selected rule directories are local in `local-planning` and public
+      in `shared-planning`. Generators, adapter planning, reconciliation, and
+      validation must consume this single policy rather than duplicate path lists.
+- [x] **8A.3 Reconcile mode-specific ignore protections**: preview and atomically apply
+      an ownership-marked `.gitignore` block that protects the always-local artifacts
+      plus the selected local-planning workspace set, while explicitly excluding
+      `AGENTS.md` and every shared-planning artifact from that block. Inspect
+      `.npmignore` and `package.json` `files` allowlists for target npm packages;
+      propose only approved relevant exclusions and report possible unintended package
+      inclusion. Never automatically untrack files or run Git commands; a mode switch
+      requiring untracking receives explicit manual migration guidance only.
+- [x] **8A.4 Generate and reconcile mode-specific documents**: revise
+      `src/generation/documents.js` and reconciliation flows so public `AGENTS.md`
+      contains shareable repository context and either safe local-workspace
+      bootstrap/resume instructions or shared-plan/ledger instructions. Generate and
+      label `PLAN.md` and `TODO.md` with the selected mode; ensure every preview change
+      reports visibility, mode, and ignore status without leaking raw interview content
+      into public output.
+- [x] **8A.5 Make selected agent adapters and rules mode-aware**: revise
+      `src/adapters/`, the selected-output planner, templates, and skill workflow so
+      selected adapters/rules are ignored local bridges in `local-planning` and
+      committed entry points in `shared-planning`. Each bridge routes through public
+      `AGENTS.md`; in local mode it requests RepoCharter initialization/resume when
+      plan/ledger files are absent, while shared mode requires the committed plan and
+      ledger before scoped work.
+- [x] **8A.6 Update session, handoff, application, and reporting behavior**: retain
+      confirmed decisions only in safe local state and mode-classified planning outputs;
+      prevent raw transcripts, credentials, secrets, and `.repo-charter/` state from
+      entering public files, logs, JSON summaries, or package metadata. Require
+      approved ignore protection before local-only writes and report selected mode,
+      visibility, skipped conflicts, manual migration guidance, and the relevant next
+      task accurately.
+- [x] **8A.7 Extend read-only validation**: make `check` diagnose a missing or invalid
+      workspace mode, missing mode-specific ignore coverage, a RepoCharter-managed
+      block that incorrectly ignores `AGENTS.md` or shared-planning artifacts, missing
+      selected adapters, and npm-package inclusion risks. Local planning absence is a
+      safe warning only in `local-planning`. Do not claim Git tracked/untracked status
+      without an explicitly approved Git observation.
+- [x] **8A.8 Add the two-mode fixture and behavior matrix**: cover both modes for
+      Codex, Claude, Copilot, and Gemini; existing public `AGENTS.md`; existing
+      `.gitignore`/`.npmignore`; `package.json` `files` allowlists; optional rules;
+      mode switching; an already tracked artifact requiring manual guidance; conflict
+      preservation; idempotent second initialization; public-content redaction; and
+      Windows/POSIX paths.
+- [x] **8A.9 Correct user documentation, skill, and examples**: update `README.md`,
+      `LEARNING.md`, lifecycle/generated-file/support docs, `CONTRIBUTING.md`, and
+      skill references for the two modes and the always-local state boundary. Preserve
+      every existing example line and original fictional content unchanged; append only
+      the minimum visibility/ignore note and any strictly necessary overview wording
+      identifying the example's selected mode. Ensure packaged RepoCharter documentation
+      never implies that local-mode target artifacts are published.
+- [x] **8A.10 Verify both corrected workspace workflows**: passed `npm run lint`,
+      `npm test` (45/45), `npm pack --dry-run --json` (52 files), and `git diff
+      --check`. A fresh Windows-local packed artifact was installed with
+      `--ignore-scripts`; its skill preview passed for both `local-planning` and
+      `shared-planning`, confirming public `AGENTS.md` plus the expected `PLAN.md` and
+      `CLAUDE.md` visibility. Fresh macOS/Linux and fresh-agent behavior evidence
+      remains Phase 8B release work.
+
+**Phase gate: PASSED**: lint, 45/45 tests, pack inspection, diff validation, and a
+fresh Windows-local packed-artifact preview proved public `AGENTS.md`, always-local
+`.repo-charter/`, mode-specific planning/adapter visibility, managed ignore
+reconciliation, no automatic Git untracking, visibility validation, package-allowlist
+warnings, and append-only example visibility notes. Fresh platform installation and
+fresh-agent behavior evaluations remain Phase 8B release work.
+
+---
+
+## Phase 8B: Preview release acceptance
+
+> Goal: Verify and publish the corrected two-mode workspace preview only after Phase
+> 8A has passed.
+
 - [ ] **8.7 Run clean cross-platform installation**: install the packed artifact in
-      clean Windows, macOS, and Linux environments and complete the documented new-
-      and existing-repository flows. Windows-local clean packed installation, help, and
-      new-repository flow passed. Blocked on clean macOS/Linux environments and an
-      observed existing-repository run there.
+      clean Windows, macOS, and Linux environments and complete new- and existing-
+      repository flows for both `local-planning` and `shared-planning`. Windows-local
+      clean packed installation, help, and new-repository flow passed under the
+      superseded single shared-document policy; macOS, Linux, and both corrected
+      visibility workflows remain unobserved.
 - [ ] **8.8 Run the full preview acceptance suite**: verify every release criterion in
       `PLAN.md`, record actual commands and results, and leave failures or unavailable
-      environments explicitly blocked. Local lint, 41-test suite, curated pack, isolated
-      Windows install, and new-repository flow passed; blocked by 8.6/8.7 and by no
-      fresh-agent behavior evaluations for any target.
-- [ ] **8.9 Publish only after approval**: present the final package evidence and
-      request explicit authorization before performing the external npm publication.
-      Not requested or performed; publication requires separate explicit authorization.
+      environments explicitly blocked. Earlier local lint, 41-test suite, curated pack,
+      isolated Windows install, and new-repository flow are historical evidence only;
+      both corrected visibility workflows need fresh verification and fresh-agent
+      behavior evaluations for every advertised target.
+- [ ] **8.9 Publish only after approval**: present final package evidence for the
+      corrected two-mode workspace policy and request explicit authorization before
+      performing the external npm publication. Not requested or
+      performed; publication requires separate explicit authorization.
 
-**Phase gate: PENDING**: local preview documentation and Windows verification are
-complete, but authenticated package-name eligibility, macOS/Linux clean installs,
-fresh-agent behavior evaluations, and explicit publication authorization remain
-unobserved blockers.
+**Phase gate: PENDING**: Phase 8A, fresh cross-platform verification, fresh-agent
+behavior evaluations, and explicit publication authorization are required before this
+preview can be published.
+
+---
+
+## Phase 9: Deferred public repository context
+
+> Goal: After the preview workflow is proven, give developers and agents cloning a
+> repository evidence-backed public context without exposing always-local state or
+> artifacts selected as local under `local-planning`.
+
+- [ ] **9.1 Define the public-context contract**: before implementation, specify the
+      approved public paths, source evidence, privacy classification, update ownership,
+      stale-content behavior, and links from `AGENTS.md` for repository maps,
+      architecture/data-flow references, domain glossaries, command references, and
+      decision records. Do not begin until the Phase 8 preview gate passes and the
+      developer explicitly advances this deferred phase.
+- [ ] **9.2 Prototype evidence-backed repository mapping**: evaluate a bounded,
+      explainable repository-map workflow against representative fixtures; record its
+      accuracy, update cost, context budget, and usefulness to fresh agents before it
+      becomes generated public documentation.
+- [ ] **9.3 Evaluate graph-based context only after a separate design decision**:
+      define graph source data, node/edge semantics, privacy exclusions, incremental
+      update strategy, rendering format, failure behavior, and fresh-agent consumption
+      criteria before implementing graph generation or claiming agent-context benefit.
+- [ ] **9.4 Add public-context generation, reconciliation, and evaluation**: only after
+      9.1–9.3 approval, generate or reconcile shareable context under a deliberate
+      public path, preserve project-owned documents, validate staleness, and prove
+      fresh-agent usefulness without promoting local plans, task ledgers, adapters,
+      rules, manifests, or interview details.
+
+**Phase gate: PENDING**: deferred by approved sequencing. Begin only after the preview
+release gate passes and public-context design, privacy, and behavior-evaluation gates
+have observed approval.

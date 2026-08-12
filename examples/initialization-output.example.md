@@ -76,3 +76,10 @@ remains unchanged.
 A warning does not become a success claim. A failed approved check, invalid ownership
 hash, or missing managed file is reported as an error and gives `check` a non-zero exit
 status.
+
+## Workspace visibility
+
+This fictional composite uses `shared-planning`: the displayed `AGENTS.md`, `PLAN.md`,
+`TODO.md`, and `CLAUDE.md` are committed. Under `local-planning`, only `AGENTS.md` is
+committed; the plan, ledger, and selected adapter stay in the developer's ignored local
+workspace. `.repo-charter/` remains local in both modes.

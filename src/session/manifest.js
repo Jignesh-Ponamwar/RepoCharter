@@ -3,9 +3,10 @@ import { writeFileAtomically } from '../filesystem/atomic.js';
 import { PACKAGE_VERSION } from '../version.js';
 import { redactSensitiveText } from '../inspection/redaction.js';
 import { selectAgents } from './agents.js';
+import { isWorkspaceVisibility } from '../workspace-visibility.js';
 
 export const SESSION_PATH = '.repo-charter/manifest.json';
-export const SESSION_SCHEMA_VERSION = 1;
+export const SESSION_SCHEMA_VERSION = 2;
 export const SESSION_STAGES = Object.freeze([
   'inspected',
   'agents-selected',
@@ -26,8 +27,9 @@ const NEXT_STAGES = Object.freeze({
   validated: [],
 });
 const MANIFEST_KEYS = new Set([
-  'schemaVersion', 'packageVersion', 'stage', 'selectedAgents', 'confirmedDecisions',
-  'templateVersions', 'managedArtifacts', 'observedChecks', 'repositorySnapshot',
+  'schemaVersion', 'packageVersion', 'stage', 'selectedAgents', 'workspaceVisibility',
+  'confirmedDecisions', 'templateVersions', 'managedArtifacts', 'observedChecks',
+  'repositorySnapshot',
 ]);
 const FORBIDDEN_KEY = /(?:raw.*(?:transcript|conversation)|(?:transcript|conversation)$|credential|token|secret|source(?:Body|Content))/i;
 
@@ -62,6 +64,7 @@ export function createSessionManifest(selectedAgents, repositorySnapshot) {
       primary: selectedAgents.primary,
       secondary: [...selectedAgents.secondary],
     },
+    workspaceVisibility: null,
     confirmedDecisions: {},
     templateVersions: {},
     managedArtifacts: {},
@@ -89,6 +92,9 @@ export function validateSessionManifest(manifest) {
     throw new Error('Session manifest is missing selected agents.');
   }
   selectAgents(manifest.selectedAgents.primary, manifest.selectedAgents.secondary);
+  if (manifest.workspaceVisibility !== null && !isWorkspaceVisibility(manifest.workspaceVisibility)) {
+    throw new Error('Session manifest has an invalid workspace visibility.');
+  }
   for (const key of ['confirmedDecisions', 'templateVersions', 'managedArtifacts']) {
     if (!manifest[key] || typeof manifest[key] !== 'object' || Array.isArray(manifest[key])) {
       throw new Error(`Session manifest is missing ${key}.`);
@@ -104,6 +110,13 @@ export function validateSessionManifest(manifest) {
   return manifest;
 }
 
+function migrateSessionManifest(manifest) {
+  if (manifest?.schemaVersion === 1 && !Object.hasOwn(manifest, 'workspaceVisibility')) {
+    return { ...manifest, schemaVersion: SESSION_SCHEMA_VERSION, workspaceVisibility: null };
+  }
+  return manifest;
+}
+
 export async function readSessionManifest(targetPath) {
   let content;
   try {
@@ -114,7 +127,7 @@ export async function readSessionManifest(targetPath) {
   }
 
   try {
-    return validateSessionManifest(JSON.parse(content));
+    return validateSessionManifest(migrateSessionManifest(JSON.parse(content)));
   } catch (error) {
     throw new Error(`Invalid session manifest: ${error.message}`);
   }
@@ -123,6 +136,14 @@ export async function readSessionManifest(targetPath) {
 export async function writeSessionManifest(targetPath, manifest) {
   validateSessionManifest(manifest);
   await writeFileAtomically(targetPath, SESSION_PATH, stableJson(manifest));
+}
+
+export function setWorkspaceVisibility(manifest, workspaceVisibility) {
+  validateSessionManifest(manifest);
+  if (!isWorkspaceVisibility(workspaceVisibility)) {
+    throw new Error('Workspace visibility must be local-planning or shared-planning.');
+  }
+  return { ...manifest, workspaceVisibility };
 }
 
 export function recordObservedCheck(manifest, { command, exitCode, output = '', verificationDepth = 'approved-checks', skipped = false }) {

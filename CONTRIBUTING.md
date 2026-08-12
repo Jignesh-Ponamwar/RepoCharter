@@ -38,6 +38,13 @@ evaluation must run in a fresh context and record the agent version, adapter ver
 fixture, native-entry discovery, plan/ledger workflow, scoped implementation,
 verification, honest TODO update, handoff, and limitations.
 
+## Workspace visibility fixtures
+
+Cover both `local-planning` and `shared-planning` when changing generation, adapters,
+ignore reconciliation, or validation. `AGENTS.md` is public in both modes and
+`.repo-charter/` is local in both modes. Preserve user-owned ignore content and never
+test by running Git untracking commands.
+
 ## Change discipline
 
 Read `PLAN.md` and `TODO.md` before code changes. Keep work inside the active approved

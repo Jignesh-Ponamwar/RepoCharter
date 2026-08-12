@@ -20,13 +20,16 @@ test('selected-agent planning generates only documented thin adapters and never 
   assert.deepEqual(plan.optionalRuleDirectories, []);
   assert.match(claudeAdapter(), /@AGENTS\.md/);
   assert.match(geminiAdapter(), /@\.\/AGENTS\.md/);
-  assert.match(copilotAdapter(), /Read `AGENTS\.md`/);
+  assert.match(copilotAdapter(), /Read public `AGENTS\.md`/);
   assert.ok(!plan.artifacts.some((artifact) => artifact.path.startsWith('.codex/')));
+  assert.ok(plan.artifacts.every((artifact) => artifact.visibility === 'local'));
+  assert.match(claudeAdapter('shared-planning'), /committed `PLAN\.md`/);
 });
 
 test('combined output always includes the canonical contract and only selected native adapters', () => {
   const documents = generateSelectedAgentDocuments({
     selectedAgents: { primary: 'claude-code', secondary: ['gemini-cli'] },
+    workspaceVisibility: 'local-planning',
     verificationDepth: 'static',
     confirmedDecisions: {},
   }, { evidence: [], commands: [] });

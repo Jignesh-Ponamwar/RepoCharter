@@ -24,6 +24,10 @@ Follow [the grill reference](./references/grill.md). Ask every question in the c
 frontier, recommend an answer, wait for the developer’s answers, then recompute. Find
 repository facts yourself; ask the developer only for decisions.
 
+Ask the developer to choose `local-planning` or `shared-planning`. Recommend
+`local-planning` for private active planning; never infer the choice from repository
+files. `.repo-charter/` remains local in both modes.
+
 **Done when:** every applicable decision is settled, contradictions are resolved, and
 the developer explicitly confirms the shared-understanding summary.
 
