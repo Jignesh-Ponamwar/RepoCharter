@@ -12,15 +12,18 @@ Last updated: 2026-08-11.
 | `npm test` | passed; see `TODO.md` for the recorded test count of the current phase gate |
 | `npm pack --dry-run --json` | inspected locally; package contents recorded in `TODO.md` |
 | packed-artifact isolated installation | covered by the Node test suite |
-| npm registry/package identity | authenticated `npm whoami` followed by `npm publish --dry-run --access public` accepted public `repo-charter@0.1.0`; no publication occurred |
+| npm registry/package identity | authenticated publish completed for `repo-charter@0.1.0`; the Phase 9 patch is prepared as `0.1.1` and remains unpublished |
 
-## Not observed in this session
+## Deferred post-MVP scope
 
 - clean installation and workflow verification on macOS;
-- clean installation and workflow verification on Linux;
-- full fresh-agent behavior evaluation for any target platform;
-- npm publication.
+- clean installation and workflow verification on Linux.
 
-These are blockers to a cross-platform release claim and npm publication. They remain
-unchecked in `TODO.md` and must be recorded with exact commands, environment, and
-observed results before the Phase 8 gate can pass.
+These platforms must not be represented as supported until their deferred Phase 11
+checks record exact commands, environments, and observed results.
+
+## Still required for the Windows-first preview
+
+- final Windows-first release acceptance;
+- full fresh-agent behavior evaluation before any agent support claim;
+- explicit npm publication authorization.

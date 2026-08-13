@@ -1,42 +1,17 @@
-import { readFile } from 'node:fs/promises';
-import { resolveTargetDirectory } from '../../../src/filesystem/paths.js';
-import { inspectRepository } from '../../../src/inspection/index.js';
-import { generateSelectedAgentDocuments } from '../../../src/adapters/planning.js';
-import { applyApprovedDocumentChanges, previewDocumentChanges, summarizeDocumentPreview } from '../../../src/generation/reconciliation.js';
-import { readSessionManifest, setWorkspaceVisibility, writeSessionManifest } from '../../../src/session/manifest.js';
+import { spawnSync } from 'node:child_process';
 
-async function jsonFile(filePath) {
-  return JSON.parse(await readFile(filePath, 'utf8'));
-}
+const cli = process.env.REPO_CHARTER_CLI ?? 'repo-charter';
+const cliArguments = process.env.REPO_CHARTER_CLI_ARGS?.split(' ').filter(Boolean) ?? [];
+const result = spawnSync(cli, [...cliArguments, 'workflow', ...process.argv.slice(2), '--json'], {
+  encoding: 'utf8',
+  shell: process.platform === 'win32',
+});
 
-async function preview(target, specification) {
-  const inspection = await inspectRepository(target);
-  const documents = generateSelectedAgentDocuments(specification, inspection);
-  return previewDocumentChanges(target, documents);
-}
-
-export async function runWorkflow(argumentsList, cwd = process.cwd()) {
-  const [operation, targetArgument, specificationPath, approvalsPath] = argumentsList;
-  if (!['preview', 'apply'].includes(operation) || !targetArgument || !specificationPath || (operation === 'apply' && !approvalsPath)) {
-    throw new Error('Usage: workflow.mjs <preview|apply> <target> <approved-spec.json> [approvals.json]');
-  }
-  const target = await resolveTargetDirectory(targetArgument, cwd);
-  const specification = await jsonFile(specificationPath);
-  const proposal = await preview(target, specification);
-  if (operation === 'preview') {
-    return { type: 'preview', preview: proposal, summary: summarizeDocumentPreview(proposal) };
-  }
-  const approvals = await jsonFile(approvalsPath);
-  const application = await applyApprovedDocumentChanges(target, proposal, approvals);
-  const session = await readSessionManifest(target);
-  if (session) await writeSessionManifest(target, setWorkspaceVisibility(session, specification.workspaceVisibility));
-  return { type: 'apply', summary: summarizeDocumentPreview(proposal), application };
-}
-
-try {
-  const result = await runWorkflow(process.argv.slice(2));
-  process.stdout.write(`${JSON.stringify(result)}\n`);
-} catch (error) {
-  process.stderr.write(`${error.message}\n`);
+if (result.error && result.error.code === 'ENOENT') {
+  process.stderr.write('RepoCharter CLI is required. Install it or explicitly run npx repo-charter@0.1.1; npx may download the package.\n');
   process.exitCode = 1;
+} else {
+  process.stdout.write(result.stdout);
+  process.stderr.write(result.stderr);
+  process.exitCode = result.status ?? 1;
 }

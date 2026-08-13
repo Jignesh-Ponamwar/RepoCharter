@@ -116,8 +116,9 @@ test('workspace visibility remains unset until confirmed and migrates prior loca
     delete legacy.workspaceVisibility;
     await writeFile(path.join(target, '.repo-charter', 'manifest.json'), `${JSON.stringify(legacy)}\n`);
     const migrated = await readSessionManifest(target);
-    assert.equal(migrated.schemaVersion, 2);
+    assert.equal(migrated.schemaVersion, 3);
     assert.equal(migrated.workspaceVisibility, null);
+    assert.equal(migrated.driftAnchor, null);
   } finally {
     await removeDirectory(target);
   }

@@ -7,7 +7,7 @@ const requiredDocs = {
   'docs/generated-files.md': ['## Ownership classification', '## Recovery', 'merge-required'],
   'docs/agent-support.md': ['no behavior-verified agent support', 'What a behavior evaluation must prove'],
   'CONTRIBUTING.md': ['## Requirements', '## Compatibility research and evaluation'],
-  'docs/verification-status.md': ['Not observed in this session', 'npm registry/package identity'],
+  'docs/verification-status.md': ['Deferred post-MVP scope', 'npm registry/package identity'],
   'examples/initialization-output.example.md': ['fictional, annotated composite', 'merge-required', 'nextTask'],
 };
 
@@ -37,6 +37,6 @@ test('package metadata includes runtime plus required preview documentation asse
     assert.ok(packageJson.files.includes(path), `package files omits ${path}`);
   }
   assert.equal(packageJson.name, 'repo-charter');
-  assert.equal(packageJson.version, '0.1.0');
+  assert.equal(packageJson.version, '0.1.1');
   assert.equal(packageJson.license, 'MIT');
 });

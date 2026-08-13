@@ -3,12 +3,14 @@ import { CliError } from './errors.js';
 import { resolveTargetDirectory } from './filesystem/paths.js';
 import { inspectRepository } from './inspection/index.js';
 import { createPlanningHandoff } from './session/handoff.js';
-import { createSessionManifest, readSessionManifest, writeSessionManifest } from './session/manifest.js';
+import { createSessionManifest, readSessionManifest, setDriftAnchor, writeSessionManifest } from './session/manifest.js';
 import { findAgent, selectAgents } from './session/agents.js';
 import { inspectionSnapshot, refreshSessionSnapshot } from './session/snapshot.js';
 import { validateRepositorySetup } from './validation/index.js';
+import { createDriftAnchor, currentGitRevision, driftReport } from './drift/index.js';
+import { runWorkflow } from './workflow.js';
 
-const COMMANDS = new Set(['init', 'check', 'resume']);
+const COMMANDS = new Set(['init', 'check', 'resume', 'drift-check', 'drift-acknowledge']);
 const AGENT_ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/;
 
 const HELP = `Usage: repo-charter <command> [path] [options]
@@ -17,6 +19,9 @@ Commands:
   init [path]              Inspect a repository and create or reuse a setup session.
   check [path]             Validate local state and inspect without writing.
   resume [path]            Reinspect and resume an incomplete setup session.
+  drift-check [path]       Read-only planning-context drift report.
+  drift-acknowledge [path] Record a new safe anchor after developer review.
+  workflow <operation> ... Skill workflow preview or approved application.
 
 Options:
   --dry-run                Preview init changes without writing.
@@ -66,6 +71,13 @@ export function parseArguments(argumentsList) {
   }
 
   const [command, ...remaining] = argumentsList;
+  if (command === 'workflow') {
+    const [operation, target = '.', specificationPath, approvalsPath, ...flags] = remaining;
+    if (!['preview', 'apply'].includes(operation) || !specificationPath || (operation === 'apply' && !approvalsPath) || flags.some((flag) => flag !== '--json')) {
+      throw new CliError('Usage: repo-charter workflow <preview|apply> <path> <approved-spec.json> [approvals.json] [--json]', 2);
+    }
+    return { command, target, operation, specificationPath, approvalsPath, json: flags.includes('--json') };
+  }
   if (!COMMANDS.has(command)) {
     throw new CliError(`Unknown command: ${command}. Run with --help for usage.`, 2);
   }
@@ -206,7 +218,43 @@ export async function run(argumentsList, cwd = process.cwd()) {
     throw new CliError(error.message, 1);
   }
 
+  if (options.command === 'workflow') {
+    const output = await runWorkflow(targetPath, options.operation, options.specificationPath, options.approvalsPath);
+    return { exitCode: 0, output };
+  }
+
   const inspection = await inspectRepository(targetPath);
+
+  if (options.command === 'drift-acknowledge') {
+    let session;
+    try {
+      session = await readSessionManifest(targetPath);
+    } catch (error) {
+      throw new CliError(error.message, 1);
+    }
+    if (!session?.driftAnchor) {
+      throw new CliError('No drift anchor exists to acknowledge. Apply an approved setup first.', 1);
+    }
+    const anchor = await createDriftAnchor(
+      targetPath,
+      inspection.snapshot,
+      'developer-acknowledged-drift',
+      await currentGitRevision(targetPath),
+    );
+    await writeSessionManifest(targetPath, setDriftAnchor(session, anchor));
+    return { exitCode: 0, output: { type: 'drift-acknowledge', target: targetPath, anchor } };
+  }
+
+  if (options.command === 'drift-check') {
+    let session;
+    try {
+      session = await readSessionManifest(targetPath);
+    } catch (error) {
+      throw new CliError(error.message, 1);
+    }
+    const report = await driftReport(targetPath, inspection, session?.driftAnchor);
+    return { exitCode: report.status === 'in-sync' || report.status === 'drift-detected' ? 0 : 1, output: { type: 'drift-check', target: targetPath, report } };
+  }
 
   if (options.command === 'check') {
     const foundation = await checkFoundation(targetPath);
@@ -346,7 +394,16 @@ function humanOutput(output) {
     }
   }
 
-  if (output.report) {
+  if (output.type === 'drift-acknowledge') {
+    lines.push('Drift anchor acknowledged and refreshed.');
+  }
+
+  if (output.type === 'drift-check') {
+    lines.push(`Drift status: ${output.report.status}`);
+    for (const item of output.report.classifications) lines.push(`${item.classification}: ${item.path}`);
+  }
+
+  if (output.report && output.type !== 'drift-check') {
     lines.push('Final change report:');
     for (const artifact of output.report.artifacts) lines.push(`${artifact.status}: ${artifact.path}`);
     for (const blocker of output.report.blockers) lines.push(`blocker: ${blocker}`);

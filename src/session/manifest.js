@@ -6,7 +6,7 @@ import { selectAgents } from './agents.js';
 import { isWorkspaceVisibility } from '../workspace-visibility.js';
 
 export const SESSION_PATH = '.repo-charter/manifest.json';
-export const SESSION_SCHEMA_VERSION = 2;
+export const SESSION_SCHEMA_VERSION = 3;
 export const SESSION_STAGES = Object.freeze([
   'inspected',
   'agents-selected',
@@ -29,7 +29,7 @@ const NEXT_STAGES = Object.freeze({
 const MANIFEST_KEYS = new Set([
   'schemaVersion', 'packageVersion', 'stage', 'selectedAgents', 'workspaceVisibility',
   'confirmedDecisions', 'templateVersions', 'managedArtifacts', 'observedChecks',
-  'repositorySnapshot',
+  'repositorySnapshot', 'driftAnchor',
 ]);
 const FORBIDDEN_KEY = /(?:raw.*(?:transcript|conversation)|(?:transcript|conversation)$|credential|token|secret|source(?:Body|Content))/i;
 
@@ -70,6 +70,7 @@ export function createSessionManifest(selectedAgents, repositorySnapshot) {
     managedArtifacts: {},
     observedChecks: [],
     repositorySnapshot,
+    driftAnchor: null,
   };
 }
 
@@ -104,6 +105,13 @@ export function validateSessionManifest(manifest) {
     throw new Error('Session manifest contains invalid observed checks.');
   }
   validateSnapshot(manifest.repositorySnapshot);
+  if (manifest.driftAnchor !== null) {
+    const anchor = manifest.driftAnchor;
+    if (!anchor || typeof anchor !== 'object' || typeof anchor.reason !== 'string' || typeof anchor.snapshotDigest !== 'string' || typeof anchor.gitRevision !== 'string' && anchor.gitRevision !== null || !anchor.planningHashes || typeof anchor.planningHashes !== 'object') {
+      throw new Error('Session manifest contains an invalid drift anchor.');
+    }
+    validateSnapshot(anchor.snapshot);
+  }
   if (containsForbiddenKey(manifest)) {
     throw new Error('Session manifest contains forbidden transcript, credential, secret, token, or source-content data.');
   }
@@ -112,7 +120,10 @@ export function validateSessionManifest(manifest) {
 
 function migrateSessionManifest(manifest) {
   if (manifest?.schemaVersion === 1 && !Object.hasOwn(manifest, 'workspaceVisibility')) {
-    return { ...manifest, schemaVersion: SESSION_SCHEMA_VERSION, workspaceVisibility: null };
+    manifest = { ...manifest, schemaVersion: 2, workspaceVisibility: null };
+  }
+  if (manifest?.schemaVersion === 2) {
+    return { ...manifest, schemaVersion: SESSION_SCHEMA_VERSION, driftAnchor: manifest.driftAnchor ?? null };
   }
   return manifest;
 }
@@ -144,6 +155,11 @@ export function setWorkspaceVisibility(manifest, workspaceVisibility) {
     throw new Error('Workspace visibility must be local-planning or shared-planning.');
   }
   return { ...manifest, workspaceVisibility };
+}
+
+export function setDriftAnchor(manifest, driftAnchor) {
+  validateSessionManifest(manifest);
+  return validateSessionManifest({ ...manifest, driftAnchor });
 }
 
 export function recordObservedCheck(manifest, { command, exitCode, output = '', verificationDepth = 'approved-checks', skipped = false }) {

@@ -41,6 +41,13 @@ node skills/repo-charter/scripts/workflow.mjs apply ../target approved-spec.json
 
 # Inspect setup integrity without writing.
 repo-charter check ../target --json
+
+# Explicitly compare an approved safe anchor with current context. This is read-only;
+# in Git repositories it discloses and runs only read-only Git observations.
+repo-charter drift-check ../target --json
+
+# After developer review, explicitly refresh the safe anchor.
+repo-charter drift-acknowledge ../target --json
 ```
 
 The public CLI does not yet accept an approved specification directly. The skill
@@ -57,6 +64,20 @@ Before generation, the developer confirms one mode:
   keep `.repo-charter/` local.
 
 RepoCharter previews its managed ignore block and never automatically untracks files.
+
+## Context drift
+
+After an approved skill application, RepoCharter records a local safe drift anchor:
+repository snapshot metadata, hashes of applicable planning documents, and no source
+bodies, patches, transcripts, or credentials. `drift-check` compares the current safe
+snapshot with that anchor. When explicitly invoked in a Git repository, it additionally
+reports the current revision plus committed, uncommitted, and untracked changed paths.
+
+Results are `in-sync`, `drift-detected`, `review-required`, or `anchor-unavailable`.
+Planning-relevant paths require developer review; `drift-check` never rewrites planning
+documents, source files, Git state, or the anchor. After review, the separate explicit
+`drift-acknowledge` command refreshes only the local safe anchor; normal reconciliation
+continues through the preview-and-approval workflow.
 
 ## Safety boundaries
 

@@ -95,6 +95,10 @@ function directoryEvidence(files, prefixes, fact, evidence, seen) {
   }
 }
 
+export async function inspectAffectedPaths(rootPath, paths) {
+  return inspectRepository(rootPath, { includePaths: paths });
+}
+
 export async function inspectRepository(rootPath, options = {}) {
   const discovery = await discoverFiles(rootPath, options);
   const { files } = discovery;

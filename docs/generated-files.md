@@ -53,6 +53,20 @@ stage, confirmed structured decisions, template/managed-artifact metadata, safe 
 snapshot metadata, and redacted observed-check results. It does not store source bodies,
 raw transcripts, credentials, tokens, or secret values.
 
+## Context drift recovery
+
+`repo-charter drift-check <target> --json` is read-only. It compares safe repository
+snapshot metadata and plan/ledger hashes with the last approved anchor. Only explicit
+invocation may observe read-only Git revision, status, and changed-path data. The report
+classifies changed paths as planning-relevant, ordinary, or unknown; it stores no raw
+diffs, source bodies, credentials, or transcripts.
+
+A planning-relevant or unknown path is `review-required`. The developer may acknowledge
+already-in-scope drift with `repo-charter drift-acknowledge <target>`, which refreshes
+only the local safe anchor. When an approved preview/apply reconciliation changes the
+planning workspace, the workflow reports `reconciled` and refreshes the anchor. Neither
+path writes source files or Git state automatically.
+
 ## Recovery
 
 - **Interrupted before approval:** rerun `resume`; it reinspects changed files and

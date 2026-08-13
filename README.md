@@ -19,8 +19,9 @@ scoped work, observed verification, and honest handoff
 
 ## Status
 
-**Preview software; not published to npm.** The package name `repo-charter` passed an
-authenticated npm publication dry-run, but no publication has occurred.
+**Windows-first preview software.** `repo-charter@0.1.0` is published to npm. The
+Phase 9 update is being prepared as `repo-charter@0.1.1`; no agent or non-Windows
+platform support claim is implied.
 
 Implemented and locally verified:
 
@@ -36,8 +37,9 @@ Implemented and locally verified:
 All target agents remain **behavior-unverified**. RepoCharter does not advertise any
 agent as supported until a fresh-agent evaluation is observed.
 
-Release remains blocked on clean macOS/Linux verification, fresh-agent evaluations for
-any claimed support, and explicit authorization to publish.
+The Windows-first preview remains blocked on final release acceptance, any fresh-agent
+evaluations needed for future support claims, and explicit authorization to publish.
+macOS and Linux verification is deferred post-MVP and must not be treated as support.
 
 ## What RepoCharter creates
 
@@ -155,10 +157,10 @@ npm pack --dry-run --json
 bash -n scripts/release-check.sh
 ```
 
-The current local verification includes lint, 45 automated tests, package dry-run
-inspection, a Windows-local packed-artifact installation, and packed skill previews for
-both workspace modes. It does not prove macOS/Linux behavior or behavior support for
-any coding agent.
+The current local verification includes lint, automated tests, package dry-run
+inspection, Windows-local packed-artifact workflows for new and existing repositories,
+and packed skill previews for both workspace modes. It does not prove behavior support
+for any coding agent. macOS and Linux are deferred post-MVP scope.
 
 ## Documentation
 

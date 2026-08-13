@@ -43,7 +43,14 @@ test('skill workflow calls shared deterministic preview code without duplicating
     }));
     const result = spawnSync(process.execPath, [
       path.join(skillRoot, 'scripts', 'workflow.mjs'), 'preview', target, specificationPath,
-    ], { encoding: 'utf8' });
+    ], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        REPO_CHARTER_CLI: 'node',
+        REPO_CHARTER_CLI_ARGS: path.resolve('bin', 'repo-charter.js'),
+      },
+    });
     assert.equal(result.status, 0, result.stderr);
     const output = JSON.parse(result.stdout);
     assert.equal(output.type, 'preview');
