@@ -37,6 +37,6 @@ test('package metadata includes runtime plus required preview documentation asse
     assert.ok(packageJson.files.includes(path), `package files omits ${path}`);
   }
   assert.equal(packageJson.name, 'repo-charter');
-  assert.equal(packageJson.version, '0.1.1');
+  assert.equal(packageJson.version, '0.1.2');
   assert.equal(packageJson.license, 'MIT');
 });
