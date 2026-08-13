@@ -10,7 +10,7 @@ const result = spawnSync(cli, [...cliArguments, 'workflow', ...process.argv.slic
 const missingCli = result.error?.code === 'ENOENT'
   || /(?:not recognized as an internal|command not found)/i.test(result.stderr);
 if (missingCli) {
-  process.stderr.write('RepoCharter CLI is required. Ask the developer to explicitly install repo-charter@0.1.3 or approve a versioned npx invocation; either may download the package.\n');
+  process.stderr.write('RepoCharter CLI is required. Ask the developer to explicitly install repo-charter@0.1.5 or approve a versioned npx invocation; either may download the package.\n');
   process.exitCode = 1;
 } else {
   process.stdout.write(result.stdout);

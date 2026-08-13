@@ -39,6 +39,6 @@ test('package metadata includes runtime plus required preview documentation asse
   }
   assert.equal(packageJson.name, 'repo-charter');
   assert.deepEqual(packageJson.bin, { 'repo-charter': 'bin/repo-charter.js' });
-  assert.equal(packageJson.version, '0.1.3');
+  assert.equal(packageJson.version, '0.1.5');
   assert.equal(packageJson.license, 'MIT');
 });

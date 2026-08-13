@@ -1,10 +1,11 @@
+import { createInterface } from 'node:readline/promises';
 import { applyFoundationPlan, checkFoundation, planFoundationInitialization } from './foundation.js';
 import { CliError } from './errors.js';
 import { resolveTargetDirectory } from './filesystem/paths.js';
 import { inspectRepository } from './inspection/index.js';
 import { createPlanningHandoff } from './session/handoff.js';
 import { createSessionManifest, readSessionManifest, setDriftAnchor, writeSessionManifest } from './session/manifest.js';
-import { findAgent, selectAgents } from './session/agents.js';
+import { AGENT_REGISTRY, findAgent, selectAgents } from './session/agents.js';
 import { inspectionSnapshot, refreshSessionSnapshot } from './session/snapshot.js';
 import { validateRepositorySetup } from './validation/index.js';
 import { createDriftAnchor, currentGitRevision, driftReport } from './drift/index.js';
@@ -25,7 +26,7 @@ Commands:
 
 Options:
   --dry-run                Preview init changes without writing.
-  --primary-agent <agent>  Required for a new setup session.
+  --primary-agent <agent>  Primary agent; prompted for a new interactive session.
   --agents <agent,...>     Optional secondary agents for a new setup session.
   --json                   Print structured output.
   --non-interactive        Require all future interactive decisions to be supplied.
@@ -169,7 +170,7 @@ async function sessionForInit(options, targetPath, inspection) {
   const existing = await readSessionManifest(targetPath);
   if (!existing) {
     if (!options.primaryAgent) {
-      throw new CliError('A new setup session requires --primary-agent <agent>.', 2);
+      throw new CliError('A new setup session requires --primary-agent <agent> when input is non-interactive.', 2);
     }
     let selectedAgents;
     try {
@@ -416,11 +417,50 @@ function humanOutput(output) {
   return lines.join('\n');
 }
 
+function canPromptForPrimaryAgent(argumentsList, io) {
+  return argumentsList[0] === 'init'
+    && !argumentsList.some((argument) => argument === '--primary-agent' || argument.startsWith('--primary-agent='))
+    && !argumentsList.includes('--json')
+    && !argumentsList.includes('--non-interactive')
+    && io.stdin?.isTTY
+    && io.stdout?.isTTY;
+}
+
+export async function promptForPrimaryAgent(io) {
+  io.stdout.write('Select the primary coding agent:\n');
+  for (const [index, agent] of AGENT_REGISTRY.entries()) {
+    io.stdout.write(`${index + 1}. ${agent.displayName}\n`);
+  }
+
+  const prompt = createInterface({ input: io.stdin, output: io.stdout, terminal: false });
+  try {
+    while (true) {
+      const answer = (await prompt.question(`Select [1-${AGENT_REGISTRY.length}]: `)).trim();
+      const selected = AGENT_REGISTRY[Number(answer) - 1];
+      if (selected) return selected.id;
+      io.stdout.write(`Enter a number from 1 to ${AGENT_REGISTRY.length}.\n`);
+    }
+  } finally {
+    prompt.close();
+  }
+}
+
 export async function main(argumentsList, io = process) {
   const jsonRequested = argumentsList.includes('--json');
 
   try {
-    const result = await run(argumentsList);
+    let result;
+    try {
+      result = await run(argumentsList);
+    } catch (error) {
+      if (!(error instanceof CliError)
+        || !error.message.startsWith('A new setup session requires --primary-agent')
+        || !canPromptForPrimaryAgent(argumentsList, io)) {
+        throw error;
+      }
+      const primaryAgent = await promptForPrimaryAgent(io);
+      result = await run([...argumentsList, '--primary-agent', primaryAgent]);
+    }
     io.stdout.write(`${result.output.type === 'help' || jsonRequested
       ? (jsonRequested ? JSON.stringify(result.output) : humanOutput(result.output))
       : humanOutput(result.output)}\n`);

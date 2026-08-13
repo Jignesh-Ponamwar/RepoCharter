@@ -1,6 +1,6 @@
 {
   "name": "repo-charter",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "description": "Safe local-first initializer for agent-ready repositories",
   "license": "MIT",
   "type": "module",

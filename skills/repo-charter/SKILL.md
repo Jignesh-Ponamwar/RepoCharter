@@ -19,7 +19,7 @@ for approval before any network operation. Offer this Windows-safe project-local
 installation (it does not run lifecycle scripts or write a lockfile):
 
 ```powershell
-npm install --ignore-scripts --no-save --no-package-lock repo-charter@0.1.3
+npm install --ignore-scripts --no-save --no-package-lock repo-charter@0.1.5
 $env:REPO_CHARTER_CLI = (Resolve-Path .\node_modules\.bin\repo-charter.cmd)
 ```
 

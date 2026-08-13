@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
+import packageJson from '../package.json' with { type: 'json' };
 import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import { Readable, Writable } from 'node:stream';
 import test from 'node:test';
-import { run } from '../src/cli.js';
+import { main, run } from '../src/cli.js';
 import { AGENT_REGISTRY, selectAgents } from '../src/session/agents.js';
 import { createPlanningHandoff } from '../src/session/handoff.js';
 import { createSessionManifest, readSessionManifest, setWorkspaceVisibility, transitionSession, writeSessionManifest } from '../src/session/manifest.js';
@@ -28,6 +30,42 @@ test('agent registry models every target without claiming unverified compatibili
   assert.throws(() => selectAgents('codex', ['codex']), /must not include the primary/);
 });
 
+test('interactive init prompts for a primary agent while automation remains explicit', async () => {
+  const target = await temporaryDirectory();
+  const output = [];
+  const input = Readable.from(['2\n']);
+  input.isTTY = true;
+  const stream = new Writable({ write: (chunk, encoding, done) => { output.push(chunk.toString()); done(); } });
+  stream.isTTY = true;
+  const io = {
+    stdin: input,
+    stdout: stream,
+    stderr: stream,
+    exitCode: undefined,
+  };
+
+  try {
+    const result = await main(['init', target], io);
+    assert.equal(result.exitCode, 0);
+    assert.equal(result.output.session.selectedAgents.primary, 'claude-code');
+    assert.match(output.join(''), /Select the primary coding agent/);
+
+    const nonInteractiveTarget = await temporaryDirectory();
+    const nonInteractiveOutput = [];
+    const nonInteractive = await main(['init', nonInteractiveTarget], {
+      stdin: { isTTY: false },
+      stdout: { isTTY: false, write: (text) => nonInteractiveOutput.push(text) },
+      stderr: { write: (text) => nonInteractiveOutput.push(text) },
+      exitCode: undefined,
+    });
+    assert.equal(nonInteractive.exitCode, 2);
+    assert.match(nonInteractiveOutput.join(''), /requires --primary-agent/);
+    await removeDirectory(nonInteractiveTarget);
+  } finally {
+    await removeDirectory(target);
+  }
+});
+
 test('new init requires and persists a valid primary agent without persisting source bodies or secrets', async () => {
   const target = await temporaryDirectory();
   const secret = 'ghp_123456789012345678901234567890';
@@ -40,6 +78,7 @@ test('new init requires and persists a valid primary agent without persisting so
 
     const initialized = await run(['init', '--primary-agent', 'codex', '--agents', 'claude-code'], target);
     assert.equal(initialized.output.session.stage, 'handoff-ready');
+    assert.equal(initialized.output.session.packageVersion, packageJson.version);
     assert.deepEqual(initialized.output.session.selectedAgents, { primary: 'codex', secondary: ['claude-code'] });
     assert.match(initialized.output.handoff, /Required interview procedure/);
     assert.ok(!initialized.output.handoff.includes(secret));

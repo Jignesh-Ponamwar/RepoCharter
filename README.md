@@ -83,29 +83,31 @@ npm --version
 RepoCharter is **CLI-first**: the CLI owns inspection, persisted state, generation,
 preview, approved writes, validation, and drift checks.
 
-### One-command Windows start
+### One-command start
 
 From the repository you want to set up, run:
 
 ```powershell
-npx --yes repo-charter@0.1.3 init . --primary-agent codex --json
+npx repo-charter init
 ```
 
-This explicitly permits npm to download and run the pinned public package without
-adding it to the repository's dependencies. Replace `codex` with another supported
-selection such as `claude-code`, `github-copilot`, `cursor`, `windsurf`, `gemini-cli`,
-or `generic`.
+RepoCharter prompts you to choose the primary coding agent, then creates a safe local
+session and prints the planning handoff. It does **not** run candidate install, test,
+build, migration, service, or deployment commands found in the repository.
 
-RepoCharter creates only its local session state at this point and returns structured
-inspection evidence plus a planning handoff. It does **not** run candidate install,
-test, build, migration, service, or deployment commands found in the repository.
-
-Use the same one-command form for normal operations:
+Use the same short form for normal operations:
 
 ```powershell
-npx --yes repo-charter@0.1.3 resume . --json
-npx --yes repo-charter@0.1.3 check . --json
-npx --yes repo-charter@0.1.3 drift-check . --json
+npx repo-charter resume
+npx repo-charter check
+npx repo-charter drift-check
+```
+
+For scripts, CI, or coding-agent orchestration, supply an explicit selection and JSON
+output instead:
+
+```powershell
+npx --yes repo-charter@0.1.5 init . --primary-agent codex --json
 ```
 
 ### Local-install fallback and source development
@@ -114,7 +116,7 @@ A normal project-local installation remains useful for repeated use, offline wor
 installation, or source-checkout development:
 
 ```powershell
-npm install --ignore-scripts repo-charter@0.1.3
+npm install --ignore-scripts repo-charter@0.1.5
 .\node_modules\.bin\repo-charter.cmd init . --primary-agent codex --json
 ```
 
@@ -153,7 +155,7 @@ If the CLI is not on `PATH`, install it locally only after developer approval an
 the wrapper override for the current PowerShell session:
 
 ```powershell
-npm install --ignore-scripts --no-save --no-package-lock repo-charter@0.1.3
+npm install --ignore-scripts --no-save --no-package-lock repo-charter@0.1.5
 $env:REPO_CHARTER_CLI = (Resolve-Path .\node_modules\.bin\repo-charter.cmd)
 ```
 
