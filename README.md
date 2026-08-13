@@ -1,203 +1,284 @@
 # RepoCharter
 
-> A local-first CLI and installable skill for setting up disciplined AI-assisted
-> development in a repository.
+> A local-first CLI and installable skill for creating disciplined, evidence-backed
+> workflows for AI-assisted software development.
 
-RepoCharter helps a developer turn a new or existing repository into an agent-ready
-workspace without blindly overwriting project files, running project commands during
-inspection, or uploading repository content. It combines bounded static inspection,
-an agent-led planning interview, explicit approval, generated collaboration documents,
-and read-only validation.
+RepoCharter prepares a new or existing repository for coding-agent work without
+blindly overwriting project files, running repository scripts during inspection, or
+uploading repository content. It combines bounded local inspection, a developer-led
+planning conversation, explicit approval, deterministic document generation, validation,
+and planning-context drift review.
 
 ```text
-repository evidence + developer decisions
-                ↓
-public AGENTS.md + planning workspace + selected agent entry points
-                ↓
-scoped work, observed verification, and honest handoff
+repository evidence + developer-approved decisions
+                         ↓
+AGENTS.md + a local or shared planning workspace + selected entry points
+                         ↓
+scoped changes + observed verification + durable handoff
 ```
+
+## Contents
+
+- [Status](#status)
+- [Requirements](#requirements)
+- [Install and start with the CLI](#install-and-start-with-the-cli)
+- [Use the optional coding-agent skill](#use-the-optional-coding-agent-skill)
+- [Workflow](#workflow)
+- [Commands](#commands)
+- [What RepoCharter creates](#what-repocharter-creates)
+- [Safety and privacy](#safety-and-privacy)
+- [Windows verification](#windows-verification)
+- [Documentation](#documentation)
+- [Development](#development)
 
 ## Status
 
-**Windows-first preview software.** `repo-charter@0.1.2` is published to npm. The
-next patch prepares the skill-led CLI bootstrap workflow; no agent or non-Windows
-platform support claim is implied.
+**Windows-first preview.** The current public package is
+[`repo-charter@0.1.3`](https://www.npmjs.com/package/repo-charter). The package and
+its installable skill are usable preview software; behavior-verified support is not
+claimed for any coding-agent platform.
 
-Implemented and locally verified:
+### What is implemented
 
-- safe Node.js 22+ CLI foundation, atomic writes, ownership records, and dry runs;
-- bounded repository inspection with protected-content exclusions and redaction;
-- selected-agent sessions, resumable safe state, and planning handoff;
-- evidence-aware developer grill and approved-specification primitives;
-- document generation, conflict preview, approval-gated application, and validation;
-- thin Claude Code, GitHub Copilot, and Gemini CLI adapter templates;
-- an installable RepoCharter skill that calls the shared implementation;
-- `local-planning` and `shared-planning` workspace visibility policies.
+- Node.js 22+ CLI with safe path handling, atomic writes, ownership records, and
+  zero-write dry runs;
+- bounded local inspection with ignored/protected-content exclusions and redaction;
+- selected-agent sessions, safe resumability, structured handoff, and developer grill;
+- document preview, approval-gated reconciliation/application, and read-only `check`;
+- `local-planning` and `shared-planning` workspace visibility modes;
+- optional thin adapters for Claude Code, GitHub Copilot, and Gemini CLI;
+- explicit read-only planning-context drift detection and acknowledgement; and
+- an installable skill that guides an agent through the canonical CLI workflow.
 
-All target agents remain **behavior-unverified**. RepoCharter does not advertise any
-agent as supported until a fresh-agent evaluation is observed.
+### What is verified and what is not
 
-The Windows-first preview remains blocked on final release acceptance, any fresh-agent
-evaluations needed for future support claims, and explicit authorization to publish.
-macOS and Linux verification is deferred post-MVP and must not be treated as support.
+| Area | Current status |
+| --- | --- |
+| Windows public package | Observed: public npm install, CLI help/init, workflow preview/apply, and `check` in new and existing fixtures for both workspace modes. |
+| Windows Skills CLI install | Observed: global skill discovery/installation and installed-skill execution through the public CLI. PromptScript does not support global skill installation. |
+| Agent behavior support | **Unverified:** no target is advertised as supported until a fresh-agent evaluation is recorded. |
+| macOS and Linux | Deferred post-MVP; neither platform is claimed as supported. |
+| Package scripts during inspection | Never run automatically. |
+
+See [verification status](./docs/verification-status.md) for the recorded environment
+and limits.
+
+## Requirements
+
+- **Node.js 22 or newer**
+- **npm** (bundled with supported Node.js installations)
+- **Windows PowerShell** for the documented Windows commands
+- Git is optional for initialization. It is used only by explicitly invoked drift
+  checks in a Git repository.
+
+Check the local runtime:
+
+```powershell
+node --version
+npm --version
+```
+
+## Install and start with the CLI
+
+RepoCharter is **CLI-first**: the CLI owns inspection, persisted state, generation,
+preview, approved writes, validation, and drift checks.
+
+### One-command Windows start
+
+From the repository you want to set up, run:
+
+```powershell
+npx --yes repo-charter@0.1.3 init . --primary-agent codex --json
+```
+
+This explicitly permits npm to download and run the pinned public package without
+adding it to the repository's dependencies. Replace `codex` with another supported
+selection such as `claude-code`, `github-copilot`, `cursor`, `windsurf`, `gemini-cli`,
+or `generic`.
+
+RepoCharter creates only its local session state at this point and returns structured
+inspection evidence plus a planning handoff. It does **not** run candidate install,
+test, build, migration, service, or deployment commands found in the repository.
+
+Use the same one-command form for normal operations:
+
+```powershell
+npx --yes repo-charter@0.1.3 resume . --json
+npx --yes repo-charter@0.1.3 check . --json
+npx --yes repo-charter@0.1.3 drift-check . --json
+```
+
+### Local-install fallback and source development
+
+A normal project-local installation remains useful for repeated use, offline work after
+installation, or source-checkout development:
+
+```powershell
+npm install --ignore-scripts repo-charter@0.1.3
+.\node_modules\.bin\repo-charter.cmd init . --primary-agent codex --json
+```
+
+Use the direct `.cmd` binary when working inside this RepoCharter source checkout. npm
+sees the checkout's own package name (`repo-charter`) and therefore does not download a
+second temporary copy for `npx repo-charter`; that development-only name collision is
+why the earlier `npx` test failed.
+
+## Use the optional coding-agent skill
+
+The optional skill teaches a coding agent how to operate RepoCharter correctly; it does
+not replace the CLI or duplicate its implementation.
+
+Install it with Skills CLI:
+
+```powershell
+npx skills add Jignesh-Ponamwar/RepoCharter@repo-charter -g -y --skill repo-charter
+```
+
+When invoked, the skill must:
+
+1. check whether `repo-charter` is available;
+2. ask the developer before any explicit CLI download or installation;
+3. use the approved CLI to initialize/resume, conduct the planning grill, preview,
+   apply approved changes, validate, and optionally review drift; and
+4. report exactly what the CLI returns, including conflicts and blockers.
+
+The skill never silently downloads, installs, or upgrades RepoCharter. A successful
+skill installation proves that the skill can be discovered and invoked; it does not
+prove that the host coding agent follows generated instructions. See
+[agent support status](./docs/agent-support.md).
+
+### Point an installed skill at a local Windows CLI
+
+If the CLI is not on `PATH`, install it locally only after developer approval and set
+the wrapper override for the current PowerShell session:
+
+```powershell
+npm install --ignore-scripts --no-save --no-package-lock repo-charter@0.1.3
+$env:REPO_CHARTER_CLI = (Resolve-Path .\node_modules\.bin\repo-charter.cmd)
+```
+
+The skill wrapper then calls that CLI through its stable `workflow` contract. It also
+supports `REPO_CHARTER_CLI_ARGS` for a deliberate wrapper such as Node executing a
+local development checkout.
+
+## Workflow
+
+1. **Inspect or resume** — run `init` for a new session or `resume` for an incomplete
+   one. Read the structured handoff before asking questions.
+2. **Plan with the developer** — establish product intent, constraints, verification,
+   and unresolved decisions. Do not ask for facts already observed by inspection.
+3. **Choose workspace visibility** — the developer explicitly selects
+   `local-planning` or `shared-planning`; RepoCharter never infers it.
+4. **Confirm shared understanding** — do not create durable planning documents until
+   the developer explicitly approves the proposed specification.
+5. **Preview every change** — inspect generated files, visibility, ignore-file changes,
+   conflicts, and proposed reconciliations.
+6. **Apply only approved changes** — approve safe files together only when appropriate;
+   preserve or explicitly reconcile project-owned conflicts.
+7. **Validate and hand off** — run read-only `check`, report results honestly, and
+   identify the next approved task.
+8. **Review drift when needed** — use `drift-check` only by explicit request; it never
+   changes plans, source files, or Git state automatically.
+
+## Commands
+
+Use the installed `.cmd` path in the examples below when the CLI is project-local.
+
+| Command | Effect |
+| --- | --- |
+| `repo-charter init [path] --primary-agent <agent>` | Inspect a repository and create or reuse a safe session. |
+| `repo-charter init [path] --dry-run --primary-agent <agent>` | Calculate base initialization without writing. |
+| `repo-charter resume [path]` | Reinspect changed safe paths and resume an incomplete session. |
+| `repo-charter check [path] --json` | Validate local RepoCharter state without writing. |
+| `repo-charter workflow preview <path> <spec.json> --json` | Produce the deterministic document/change preview used by the skill. |
+| `repo-charter workflow apply <path> <spec.json> <approvals.json> --json` | Atomically apply only approved proposed changes. |
+| `repo-charter drift-check [path] --json` | Read-only planning-context drift report. |
+| `repo-charter drift-acknowledge [path] --json` | Record a new safe anchor after explicit developer review. |
+
+### Workflow specification and approvals
+
+The coding agent normally creates the approved specification after the developer
+confirms the planning conversation. It must contain no raw chat, source bodies,
+credentials, or secrets. A minimal fixture specification looks like:
+
+```json
+{
+  "selectedAgents": { "primary": "codex", "secondary": [] },
+  "workspaceVisibility": "local-planning",
+  "verificationDepth": "static",
+  "confirmedDecisions": {}
+}
+```
+
+Preview before writing:
+
+```powershell
+.\node_modules\.bin\repo-charter.cmd workflow preview . .\approved-spec.json --json
+```
+
+For a new fixture with no conflicts, the developer can approve safe creations with:
+
+```json
+{ "approveSafe": true }
+```
+
+Then apply:
+
+```powershell
+.\node_modules\.bin\repo-charter.cmd workflow apply . .\approved-spec.json .\approvals.json --json
+```
+
+For non-empty or project-owned files, read the preview and supply explicit preserve or
+reconciled-content decisions. Do not use blanket approval to overwrite ambiguity.
 
 ## What RepoCharter creates
 
-`AGENTS.md` is always the public repository contract. During setup, the developer
-chooses one visibility mode:
+`AGENTS.md` is always the public repository contract. The developer chooses the
+visibility of planning artifacts:
 
-| Mode | Committed/public | Local-only/ignored |
+| Mode | Public/committed | Local-only/ignored |
 | --- | --- | --- |
 | `local-planning` | `AGENTS.md` | `PLAN.md`, `TODO.md`, selected adapters/rules, `.repo-charter/` |
 | `shared-planning` | `AGENTS.md`, `PLAN.md`, `TODO.md`, selected adapters/rules | `.repo-charter/` |
 
-Credentials, secret-bearing environment files, and machine-specific state remain
-local in both modes.
+Selected agent entry points are kept intentionally small:
 
-RepoCharter previews a managed ignore block before writing it. It never automatically
-runs `git rm --cached`, stages files, creates commits, or pushes changes. If a file is
-already tracked, adding it to `.gitignore` alone will not make it private.
-
-## Current workflow
-
-The public CLI creates/reuses a safe inspection and planning session. The active coding
-agent conducts the interview, obtains confirmation, and uses the packaged skill
-workflow to preview and apply an approved specification.
-
-```text
-repo-charter init
-  → bounded inspection and selected-agent session
-  → agent reads the handoff and interviews the developer
-  → developer confirms decisions and workspace visibility
-  → skill previews every document, adapter, and ignore-file change
-  → developer approves safe writes and resolves conflicts
-  → skill applies approved changes
-  → repo-charter check reports integrity, warnings, and next task
-```
-
-The CLI intentionally does not execute project package scripts, lifecycle hooks,
-migrations, services, containers, deployments, or external-system operations merely
-because it inspected a repository.
-
-## Local quick start
-
-RepoCharter requires Node.js 22 or newer. Until publication, run it from this checkout:
-
-```bash
-# Inspect a repository and create a safe session without writing.
-node bin/repo-charter.js init ../target-repository --dry-run --primary-agent codex
-
-# Create or resume a selected-agent session and print the planning handoff.
-node bin/repo-charter.js init ../target-repository --primary-agent claude-code --json
-node bin/repo-charter.js resume ../target-repository --json
-
-# Validate a setup without writing.
-node bin/repo-charter.js check ../target-repository --json
-```
-
-After the developer confirms the agent-led interview, create a safe approved
-specification containing `workspaceVisibility`, then use the skill workflow:
-
-```bash
-node skills/repo-charter/scripts/workflow.mjs preview \
-  ../target-repository approved-spec.json
-
-node skills/repo-charter/scripts/workflow.mjs apply \
-  ../target-repository approved-spec.json approvals.json
-```
-
-The approved specification must use exactly one of:
-
-```json
-{ "workspaceVisibility": "local-planning" }
-```
-
-or:
-
-```json
-{ "workspaceVisibility": "shared-planning" }
-```
-
-## Install and use the CLI
-
-RepoCharter is a **CLI-first** product. Install the published package for a project or
-use a versioned `npx` invocation:
-
-```powershell
-npm install --ignore-scripts repo-charter@0.1.3
-.\node_modules\.bin\repo-charter.cmd --help
-.\node_modules\.bin\repo-charter.cmd init . --primary-agent codex
-.\node_modules\.bin\repo-charter.cmd check . --json
-```
-
-The direct Windows `.cmd` invocation is the verified package path. If a Windows `npx`
-command cannot resolve the executable, install the package as above rather than assuming
-the published CLI is absent. `init` performs bounded local inspection and creates a
-safe session; it does not run repository package scripts.
-
-## Optional agent skill
-
-The bundled RepoCharter skill guides compatible coding agents through the planning,
-preview, and approval workflow. It does not replace the CLI, which remains responsible
-for deterministic state, generation, writes, validation, and drift checks.
-
-After the GitHub source is available, install the skill with:
-
-```powershell
-npx skills add Jignesh-Ponamwar/RepoCharter@repo-charter -g -y
-```
-
-The installed skill actively checks for the `repo-charter` CLI before it starts work.
-If it is absent, it asks the developer to approve an explicit installation or versioned
-`npx` invocation, explains that either may download the CLI, then uses the available
-CLI to drive init/resume, the planning grill, preview, approved apply, check, and
-explicit drift review. It does not silently download or install anything. A successful
-skill installation only proves discovery and workflow availability, not behavior-
-verified support for every agent platform.
-
-## Selected agent entry points
-
-RepoCharter always creates or reconciles public `AGENTS.md`. It adds only the smallest
-native bridge required by a selected agent:
-
-| Selected agent | Native entry point |
+| Selected target | Generated native entry point |
 | --- | --- |
-| Codex, Cursor, Windsurf, generic consumer | `AGENTS.md` |
+| Codex, Cursor, Windsurf, generic `AGENTS.md` consumer | `AGENTS.md` |
 | Claude Code | `CLAUDE.md` |
 | GitHub Copilot | `.github/copilot-instructions.md` |
 | Gemini CLI | `GEMINI.md` |
 
-In local planning, selected adapters remain local. In shared planning, they are
-committed alongside the plan and ledger. Optional rule directories are not generated
-by default. Compatibility research is documented, but no generated template is a
-behavior-support claim.
+RepoCharter previews a marked `.gitignore` block but never automatically untracks a
+file, stages changes, commits, or pushes. Existing tracked files require a deliberate
+manual migration decision.
 
-## Safety and privacy guarantees
+## Safety and privacy
 
-- Repository analysis is local; RepoCharter collects no telemetry or source uploads.
-- Inspection respects `.gitignore`, hard-excludes protected content, and redacts
-  secret-like values from captured output.
-- Raw chat transcripts, source bodies, credentials, tokens, and secrets are not stored
-  in RepoCharter session state.
-- Every durable write is previewed and requires approval.
-- Project-owned or modified documents require preservation or explicit reconciliation.
-- Writes use validated paths and atomic replacement.
-- `check` is read-only and distinguishes errors, warnings, failed checks, and skipped
-  checks.
+- Analysis stays local; RepoCharter sends no telemetry and uploads no repository
+  content.
+- Inspection respects `.gitignore`, skips dependency/build/cache directories and
+  protected files, and redacts secret-like captured values.
+- Static inspection never executes package scripts, lifecycle hooks, migrations,
+  services, containers, deployments, or external-system operations.
+- Raw chat transcripts, source bodies, credentials, tokens, and secret values are not
+  persisted in `.repo-charter/` state.
+- Every durable change is previewed and requires approval.
+- Managed/project-owned content is preserved unless the developer explicitly approves
+  a reconciliation.
+- `check` and `drift-check` are read-only.
 
-## Development and verification
+## Windows verification
 
-```bash
-npm run lint
-npm test
-npm pack --dry-run --json
-bash -n scripts/release-check.sh
-```
+For a reproducible public-consumer test of `repo-charter@0.1.3`, follow the
+[Windows end-to-end verification guide](./docs/windows-e2e-test.md). It covers:
 
-The current local verification includes lint, automated tests, package dry-run
-inspection, Windows-local packed-artifact workflows for new and existing repositories,
-and packed skill previews for both workspace modes. It does not prove behavior support
-for any coding agent. macOS and Linux are deferred post-MVP scope.
+- a clean npm installation from the public registry;
+- new and existing Git fixture workflows in both visibility modes;
+- CLI preview, approved apply, `check`, and drift checks;
+- global Skills CLI installation and use of the installed skill with the public CLI;
+- cleanup and evidence to record.
 
 ## Documentation
 
@@ -205,19 +286,28 @@ for any coding agent. macOS and Linux are deferred post-MVP scope.
 - [Generated files, ownership, and recovery](./docs/generated-files.md)
 - [Agent support status](./docs/agent-support.md)
 - [Verification status](./docs/verification-status.md)
+- [Windows end-to-end verification](./docs/windows-e2e-test.md)
 - [Contribution guide](./CONTRIBUTING.md)
 - [Implementation plan](./PLAN.md)
 - [Project TODO](./TODO.md)
 - [Technical learning guide](./LEARNING.md)
 - [Fictional examples](./examples/)
 
-## Contributing
+## Development
 
-Read `PLAN.md`, then find the first relevant unchecked task in `TODO.md`. Keep changes
-inside approved scope, preserve project-owned content, record only observed verification
-evidence, and do not claim platform, agent, or release results that were not observed.
+From a source checkout:
 
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for fixture and verification conventions.
+```powershell
+npm run lint
+npm test
+npm pack --dry-run --json
+```
+
+Keep changes inside the approved scope in `PLAN.md` and the next relevant unchecked
+item in `TODO.md`. Record only verification actually observed. Do not claim agent,
+platform, or release support that has not been tested.
+
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for fixture and contribution conventions.
 
 ## License
 

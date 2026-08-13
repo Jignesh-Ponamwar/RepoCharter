@@ -35,9 +35,10 @@ repo-charter init ../target --primary-agent codex --json
 # Resume after an interruption or changed files.
 repo-charter resume ../target --json
 
-# After the developer has approved a safe specification, use the packaged skill path.
-node skills/repo-charter/scripts/workflow.mjs preview ../target approved-spec.json
-node skills/repo-charter/scripts/workflow.mjs apply ../target approved-spec.json approvals.json
+# After the developer has approved a safe specification, preview/apply through the
+# stable CLI workflow contract (the installed skill wrapper calls these operations).
+repo-charter workflow preview ../target approved-spec.json --json
+repo-charter workflow apply ../target approved-spec.json approvals.json --json
 
 # Inspect setup integrity without writing.
 repo-charter check ../target --json
@@ -50,9 +51,11 @@ repo-charter drift-check ../target --json
 repo-charter drift-acknowledge ../target --json
 ```
 
-The public CLI does not yet accept an approved specification directly. The skill
-workflow calls the same inspection, generation, preview, and application modules; it
-does not maintain a second implementation.
+The CLI exposes stable `workflow preview` and `workflow apply` operations for the
+approved-specification path. The installed skill wrapper calls the published CLI through
+that contract; it does not import repository-relative source modules or maintain a
+second implementation. If the CLI is absent, the skill asks the developer to approve an
+explicit install or versioned `npx` invocation and never downloads it silently.
 
 ## Workspace visibility
 

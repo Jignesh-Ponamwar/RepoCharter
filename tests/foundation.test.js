@@ -13,6 +13,7 @@ import { verifyOwnershipDocument } from '../src/ownership.js';
 
 const packageRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const npmCommand = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+const npxCommand = process.platform === 'win32' ? 'npx.cmd' : 'npx';
 const gitCommand = process.platform === 'win32' ? 'git.exe' : 'git';
 
 async function temporaryDirectory(prefix = 'repo-charter-test-') {
@@ -224,6 +225,18 @@ test('packed artifact installs in isolation and runs help, dry run, and base ini
     const help = runProcess(binary, ['--help'], { cwd: workspace });
     assert.equal(help.status, 0, help.stderr);
     assert.match(help.stdout, /Usage: repo-charter/);
+
+    const npxTarget = path.join(workspace, 'npx-target');
+    await mkdir(npxTarget);
+    const npxHelp = runProcess(npxCommand, ['--yes', `--package=${tarball}`, 'repo-charter', '--help'], { cwd: npxTarget });
+    assert.equal(npxHelp.status, 0, npxHelp.stderr);
+    assert.match(npxHelp.stdout, /Usage: repo-charter/);
+
+    const npxInitializedTarget = path.join(workspace, 'npx-initialized-target');
+    await mkdir(npxInitializedTarget);
+    const npxInit = runProcess(npxCommand, ['--yes', `--package=${tarball}`, 'repo-charter', 'init', npxInitializedTarget, '--primary-agent', 'codex'], { cwd: npxTarget });
+    assert.equal(npxInit.status, 0, npxInit.stderr);
+    assert.equal(verifyOwnershipDocument(await readFile(path.join(npxInitializedTarget, OWNERSHIP_PATH), 'utf8')).valid, true);
 
     await mkdir(targetDirectory);
     const dryRun = runProcess(binary, ['init', targetDirectory, '--dry-run', '--primary-agent', 'codex'], { cwd: workspace });

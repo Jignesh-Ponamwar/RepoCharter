@@ -31,6 +31,12 @@ silently download the CLI. Installing the skill successfully does not mark any t
 in the table above as supported; that still requires the fresh-agent behavior evaluation
 described below.
 
+Observed 2026-08-13: the documented Skills CLI source resolved, listed one
+`repo-charter` skill, and installed the global skill for Codex-visible agents. The
+installer also reported that PromptScript does not support global skill installation,
+so PromptScript is not treated as verified by that check. The installed skill wrapper
+then drove public-package preview/apply/check through `REPO_CHARTER_CLI`.
+
 ## Workspace visibility
 
 Selected native adapters are local-only in `local-planning` and committed in
