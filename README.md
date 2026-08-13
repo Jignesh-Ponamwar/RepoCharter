@@ -19,8 +19,8 @@ scoped work, observed verification, and honest handoff
 
 ## Status
 
-**Windows-first preview software.** `repo-charter@0.1.0` is published to npm. The
-Phase 9 update is being prepared as `repo-charter@0.1.1`; no agent or non-Windows
+**Windows-first preview software.** `repo-charter@0.1.2` is published to npm. The
+next patch prepares the skill-led CLI bootstrap workflow; no agent or non-Windows
 platform support claim is implied.
 
 Implemented and locally verified:
@@ -117,6 +117,43 @@ or:
 ```json
 { "workspaceVisibility": "shared-planning" }
 ```
+
+## Install and use the CLI
+
+RepoCharter is a **CLI-first** product. Install the published package for a project or
+use a versioned `npx` invocation:
+
+```powershell
+npm install --ignore-scripts repo-charter@0.1.3
+.\node_modules\.bin\repo-charter.cmd --help
+.\node_modules\.bin\repo-charter.cmd init . --primary-agent codex
+.\node_modules\.bin\repo-charter.cmd check . --json
+```
+
+The direct Windows `.cmd` invocation is the verified package path. If a Windows `npx`
+command cannot resolve the executable, install the package as above rather than assuming
+the published CLI is absent. `init` performs bounded local inspection and creates a
+safe session; it does not run repository package scripts.
+
+## Optional agent skill
+
+The bundled RepoCharter skill guides compatible coding agents through the planning,
+preview, and approval workflow. It does not replace the CLI, which remains responsible
+for deterministic state, generation, writes, validation, and drift checks.
+
+After the GitHub source is available, install the skill with:
+
+```powershell
+npx skills add Jignesh-Ponamwar/RepoCharter@repo-charter -g -y
+```
+
+The installed skill actively checks for the `repo-charter` CLI before it starts work.
+If it is absent, it asks the developer to approve an explicit installation or versioned
+`npx` invocation, explains that either may download the CLI, then uses the available
+CLI to drive init/resume, the planning grill, preview, approved apply, check, and
+explicit drift review. It does not silently download or install anything. A successful
+skill installation only proves discovery and workflow availability, not behavior-
+verified support for every agent platform.
 
 ## Selected agent entry points
 

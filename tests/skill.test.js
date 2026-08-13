@@ -12,6 +12,10 @@ test('installable RepoCharter skill has concise metadata and progressive referen
   const manifest = await readFile(path.join(skillRoot, 'agents', 'openai.yaml'), 'utf8');
   assert.match(skill, /^---\nname: repo-charter\ndescription: /);
   assert.match(skill, /workflow\.mjs preview/);
+  assert.match(skill, /First run `repo-charter --help`/);
+  assert.match(skill, /Never silently install, download, or\s+upgrade the CLI/);
+  assert.match(skill, /repo-charter check <target> --json/);
+  assert.match(skill, /repo-charter drift-check <target> --json/);
   assert.match(manifest, /display_name: "RepoCharter"/);
   for (const reference of ['analysis.md', 'grill.md', 'reconciliation.md', 'compatibility.md']) {
     await readFile(path.join(skillRoot, 'references', reference), 'utf8');

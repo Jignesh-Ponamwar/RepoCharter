@@ -31,10 +31,9 @@ Options:
   --non-interactive        Require all future interactive decisions to be supplied.
   -h, --help               Show this help.
 
-Phases 1-7 provide safe inspection/session state, planning handoff, document-generation
-primitives, documented adapter planning, and read-only setup validation. Agent behavior
-compatibility remains unverified; the public CLI does not yet accept an approved setup
-specification for document application.`;
+RepoCharter provides safe inspection/session state, planning handoff, document
+preview/application through the skill workflow contract, validation, and read-only
+context-drift checks. Agent behavior compatibility remains unverified.`;
 
 function parseAgentId(value, optionName) {
   if (!AGENT_ID_PATTERN.test(value)) {

@@ -20,6 +20,17 @@ The native discovery sources, import/precedence limitations, and required future
 verification method are recorded in
 [agent-instruction-surfaces.md](./research/agent-instruction-surfaces.md).
 
+## CLI and skill installation
+
+The published npm CLI is the canonical deterministic surface. The optional Skills CLI
+installation, `npx skills add Jignesh-Ponamwar/RepoCharter@repo-charter -g -y`, gives a
+coding agent the procedure to check for the CLI, obtain developer approval for any
+explicit install or versioned `npx` invocation, and then drive init/resume, interview,
+preview, approved apply, check, and explicit drift review through that CLI. It must not
+silently download the CLI. Installing the skill successfully does not mark any target
+in the table above as supported; that still requires the fresh-agent behavior evaluation
+described below.
+
 ## Workspace visibility
 
 Selected native adapters are local-only in `local-planning` and committed in
