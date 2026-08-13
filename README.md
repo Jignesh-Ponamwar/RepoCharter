@@ -34,7 +34,7 @@ scoped changes + observed verification + durable handoff
 ## Status
 
 **Windows-first preview.** The current public package is
-[`repo-charter@0.1.3`](https://www.npmjs.com/package/repo-charter). The package and
+[`repo-charter@0.1.5`](https://www.npmjs.com/package/repo-charter). The package and
 its installable skill are usable preview software; behavior-verified support is not
 claimed for any coding-agent platform.
 
@@ -273,7 +273,7 @@ manual migration decision.
 
 ## Windows verification
 
-For a reproducible public-consumer test of `repo-charter@0.1.3`, follow the
+For a reproducible public-consumer test of `repo-charter@0.1.5`, follow the
 [Windows end-to-end verification guide](./docs/windows-e2e-test.md). It covers:
 
 - a clean npm installation from the public registry;

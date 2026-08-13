@@ -1,6 +1,6 @@
 # Windows public-consumer end-to-end verification
 
-This guide verifies the public `repo-charter@0.1.3` package and the GitHub-installed
+This guide verifies the public `repo-charter@0.1.5` package and the GitHub-installed
 RepoCharter skill as a Windows user would consume them. It deliberately avoids this
 source checkout after setup: the CLI comes from npm, and the skill comes from Skills
 CLI.
@@ -38,13 +38,13 @@ npm --version
 Confirm the published version before installing it:
 
 ```powershell
-npm view repo-charter@0.1.3 version --prefer-online
+npm view repo-charter@0.1.5 version --prefer-online
 ```
 
 Expected output:
 
 ```text
-0.1.3
+0.1.5
 ```
 
 Create one disposable test root. First verify the one-command public experience from a
@@ -57,7 +57,7 @@ New-Item -ItemType Directory -Force $npxTarget | Out-Null
 @'{ "name": "repo-charter-npx-e2e", "private": true }'@ | Set-Content "$npxTarget\package.json"
 Push-Location $npxTarget
 try {
-  npx --yes repo-charter@0.1.3 init . --primary-agent codex --json
+  npx --yes repo-charter@0.1.5 init . --primary-agent codex --json
   if (-not (Test-Path '.repo-charter\manifest.json')) { throw 'npx init did not create a session manifest.' }
 } finally {
   Pop-Location
@@ -76,7 +76,7 @@ keeps the harness isolated from lockfile changes.
 ```powershell
 $harness = Join-Path $root 'harness'
 New-Item -ItemType Directory -Force $harness | Out-Null
-npm install --ignore-scripts --no-save --no-package-lock --prefix $harness repo-charter@0.1.3
+npm install --ignore-scripts --no-save --no-package-lock --prefix $harness repo-charter@0.1.5
 $cli = (Resolve-Path "$harness\node_modules\.bin\repo-charter.cmd").Path
 & $cli --help
 ```
@@ -275,7 +275,7 @@ coupling.
 In a separate PowerShell process with neither `repo-charter` on `PATH` nor
 `REPO_CHARTER_CLI` set, run the installed skill wrapper preview command. It must fail
 without writing and explain that the developer must explicitly install
-`repo-charter@0.1.3` or approve a versioned `npx` invocation. Do not approve an
+`repo-charter@0.1.5` or approve a versioned `npx` invocation. Do not approve an
 installation solely for this negative test.
 
 ## 6. Record results and clean up

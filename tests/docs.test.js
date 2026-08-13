@@ -8,7 +8,7 @@ const requiredDocs = {
   'docs/agent-support.md': ['no behavior-verified agent support', 'What a behavior evaluation must prove'],
   'CONTRIBUTING.md': ['## Requirements', '## Compatibility research and evaluation'],
   'docs/verification-status.md': ['Deferred post-MVP scope', 'npm registry/package identity'],
-  'docs/windows-e2e-test.md': ['## 1. Preconditions and isolated harness', '## 5. Verify the installed skill uses the public CLI', 'repo-charter@0.1.3'],
+  'docs/windows-e2e-test.md': ['## 1. Preconditions and isolated harness', '## 5. Verify the installed skill uses the public CLI', 'repo-charter@0.1.5'],
   'examples/initialization-output.example.md': ['fictional, annotated composite', 'merge-required', 'nextTask'],
 };
 
