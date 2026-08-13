@@ -19,10 +19,12 @@ test('preview documentation, examples, and release record state verified limits 
   const generated = await readFile('examples/generated-AGENTS.example.md', 'utf8');
   assert.ok(generated.split('\n').length >= 150);
   assert.match(generated, /Fictional generated example/);
+  const copilot = await readFile('examples/.github/copilot-instructions.md', 'utf8');
+  const gemini = await readFile('examples/GEMINI.md', 'utf8');
   assert.equal(
-    await readFile('examples/.github/copilot-instructions.md', 'utf8'),
-    await readFile('examples/GEMINI.md', 'utf8'),
-    'The Copilot example must retain the shared adapter rules verbatim.',
+    copilot.slice(copilot.indexOf('\n')),
+    gemini.slice(gemini.indexOf('\n')),
+    'The Copilot example must retain the shared adapter rules verbatim after its platform-specific heading.',
   );
 });
 

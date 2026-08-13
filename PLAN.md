@@ -144,7 +144,8 @@ current phase.
 ### Responsibility boundaries
 
 - The CLI owns deterministic inspection, state transitions, visibility classification,
-  filesystem changes, ownership detection, and validation.
+  filesystem changes, ownership detection, validation, and explicit read-only drift
+  detection.
 - The active coding agent owns adaptive questioning, synthesis, contradiction
   detection, and proposing project-specific content.
 - The developer owns product intent, unresolved tradeoffs, conflict resolution, and
@@ -486,7 +487,9 @@ Static inspection identifies commands but does not execute package scripts. The 
 may propose lint, type-check, test, build, startup, or runtime checks. Execution occurs
 only after developer approval or under the active agent's established permission
 model. Dependency installation, lifecycle scripts, migrations, services, and external
-systems always require clear authority.
+systems always require clear authority. Post-preview `drift-check` may run only its
+disclosed read-only local Git commands after explicit invocation; ordinary static
+inspection and `check` do not run Git commands.
 
 ### Local-only guarantee
 
@@ -547,6 +550,34 @@ initialization twice against an unchanged completed setup must produce no diff.
 Diagnostics distinguish errors from warnings. Integrity, safety, or contract failures
 produce a non-zero exit status. Subjective style preferences remain advisory.
 
+### Post-preview context drift detection
+
+After preview release acceptance, RepoCharter may provide an explicit read-only
+`repo-charter drift-check [path] [--json]` command. It detects potential planning
+context drift; it never automatically rewrites `PLAN.md`, `TODO.md`, or source files.
+
+After an approved application or explicit reconciliation acknowledgement, local state
+may record a safe drift anchor: current Git revision when explicitly available, safe
+repository-snapshot digest, and hashes of applicable planning documents. It stores no
+Git patches, raw source content, database content, chat transcripts, credentials, or
+secrets. A non-Git repository uses snapshot comparison only.
+
+When explicitly invoked in a Git repository, the command may disclose and run
+read-only commands to compare the anchor revision, current revision, tracked working
+changes, and changed path names. It must separately report an unreachable anchor after
+a rebase/reset and uncommitted or untracked changes. It classifies affected paths using
+existing inspection evidence as planning-relevant, ordinary, or unknown; it must not
+claim semantic changes such as a database-table rename without a separately approved,
+evidence-backed parser.
+
+A planning-relevant drift report invalidates affected assumptions and directs the agent
+to reinspect only affected paths, ask focused developer questions where intent remains
+unknown, and preview any plan/ledger reconciliation. The developer may acknowledge the
+drift as already in scope, approve a reconciliation, preserve existing documents, or
+leave the workspace review-required. A new anchor is recorded only after that explicit
+acknowledgement or approved reconciliation. No hooks, background monitoring, automatic
+Git operations, automatic untracking, or automatic durable-document edits are in scope.
+
 ## 11. Test and evaluation strategy
 
 ### Repository fixtures
@@ -566,6 +597,8 @@ Maintain isolated fixtures for:
 - existing `.gitignore`, `.npmignore`, and `package.json` `files` allowlists;
 - both `local-planning` and `shared-planning` artifact sets for every selected adapter;
 - a mode switch and an already tracked artifact requiring manual migration guidance;
+- post-preview drift checks for non-Git repositories, committed/uncommitted changed
+  planning-relevant paths, untracked files, and an unreachable Git anchor;
 - Windows and POSIX path behavior.
 
 Fixtures must verify dry-run, interruption, resume, atomicity, conflict preservation,
@@ -653,9 +686,12 @@ Templates and deterministic scripts are shared assets rather than duplicated pro
 8. **Preview distribution** -> gate: the packed `0.1.0` npm artifact installs and
    completes documented local-planning and shared-planning workflows in clean Windows,
    macOS, and Linux environments.
-9. **Deferred public repository context** -> gate: only after preview behavior is
-   proven, evidence-backed public context generation has an approved privacy model,
-   update contract, and fresh-agent usefulness evaluation.
+9. **Context drift detection and reconciliation** -> gate: explicit read-only drift
+   checks correctly report snapshot/Git anchor changes and review-required context
+   without storing patches, requiring Git, or rewriting durable documents.
+10. **Deferred public repository context** -> gate: only after preview behavior and
+   drift handling are proven, evidence-backed public context generation has an approved
+   privacy model, update contract, and fresh-agent usefulness evaluation.
 
 ## 14. Release acceptance criteria
 
@@ -693,8 +729,12 @@ The first preview is usable only after observing all of the following:
   safe structured state; raw conversations are not retained.
 - `.repo-charter/`, credentials, secret-bearing environment files, and machine-
   specific state are always local-only regardless of workspace mode.
-- Public repository context beyond `AGENTS.md` is deferred until after the preview;
-  it must be independently evidence-backed, approved, and safe to share.
+- Context drift detection is deferred until after preview acceptance and remains an
+  explicit read-only command; it does not infer semantic schema changes or rewrite
+  planning documents automatically.
+- Public repository context beyond `AGENTS.md` is deferred until after preview and
+  drift handling; it must be independently evidence-backed, approved, and safe to
+  share.
 - Repository verification depth is selected during setup, defaulting to static
   inspection plus existing non-destructive checks proposed for approval.
 - `repo-charter@0.1.0` passed an authenticated public npm publication dry-run; it

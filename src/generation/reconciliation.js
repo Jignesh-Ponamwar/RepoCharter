@@ -82,7 +82,24 @@ export async function previewDocumentChanges(targetPath, generatedDocuments) {
       const generated = { path, content: ignored.content, templateVersion: 1 };
       const managed = ownership.artifacts?.find((artifact) => artifact.path === path);
       const classified = classify(generated, current, managed);
-      changes.push({ ...classified, content: ignored.content, templateVersion: 1, visibility: 'public', kind: 'ignore-policy' });
+      const safeManagedSection = current.status === 'present'
+        && !managed
+        && ignored.status !== 'unchanged'
+        && classified.status === 'merge-required';
+      changes.push({
+        ...(safeManagedSection
+          ? {
+            path,
+            status: 'compatible-existing',
+            reason: 'User-owned ignore content is preserved while RepoCharter reconciles its non-overlapping managed block.',
+            permittedActions: ['approve-safe-managed-section'],
+          }
+          : classified),
+        content: ignored.content,
+        templateVersion: 1,
+        visibility: 'public',
+        kind: 'ignore-policy',
+      });
     }
   }
   if (ownership.error) {
@@ -122,7 +139,10 @@ export async function applyApprovedDocumentChanges(targetPath, preview, approval
   const managed = new Map(ownership.artifacts.map((artifact) => [artifact.path, artifact]));
   for (const change of preview.changes) {
     if (change.path === OWNERSHIP_PATH) continue;
-    if (change.status === 'blocked' || change.status === 'compatible-existing') {
+    const safeManagedSection = change.kind === 'ignore-policy'
+      && change.status === 'compatible-existing'
+      && change.permittedActions.includes('approve-safe-managed-section');
+    if (change.status === 'blocked' || (change.status === 'compatible-existing' && !safeManagedSection)) {
       results.push({ path: change.path, status: change.status === 'compatible-existing' ? 'unchanged' : 'blocked', reason: change.reason });
       continue;
     }
@@ -133,7 +153,13 @@ export async function applyApprovedDocumentChanges(targetPath, preview, approval
 
     let content;
     let owned = false;
-    if (SAFE_STATUSES.has(change.status)) {
+    if (safeManagedSection) {
+      if (approvals.approveSafe !== true) {
+        results.push({ path: change.path, status: 'pending-approval', reason: 'Safe change was not approved.' });
+        continue;
+      }
+      content = change.content;
+    } else if (SAFE_STATUSES.has(change.status)) {
       if (approvals.approveSafe !== true) {
         results.push({ path: change.path, status: 'pending-approval', reason: 'Safe change was not approved.' });
         continue;

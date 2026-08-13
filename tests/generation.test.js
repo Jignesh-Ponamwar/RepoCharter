@@ -6,6 +6,7 @@ import test from 'node:test';
 import { generateCanonicalDocuments } from '../src/generation/documents.js';
 import { applyApprovedDocumentChanges, formatDocumentPreview, previewDocumentChanges, summarizeDocumentPreview } from '../src/generation/reconciliation.js';
 import { inspectRepository } from '../src/inspection/index.js';
+import { managedIgnorePaths } from '../src/visibility/ignore.js';
 
 function specification() {
   return {
@@ -90,6 +91,29 @@ test('empty fixtures apply approved safe documents atomically and an unchanged s
     const secondApply = await applyApprovedDocumentChanges(target, secondPreview, { approveSafe: true });
     assert.deepEqual(secondApply.results.map((result) => result.status), ['unchanged', 'unchanged', 'unchanged', 'unchanged']);
     assert.equal(secondApply.ownershipChanged, false);
+  } finally {
+    await rm(target, { recursive: true, force: true });
+  }
+});
+
+test('safe approval appends the managed ignore block without taking ownership of existing user content', async () => {
+  const target = await temporaryRepository('repo-charter-existing-ignore-');
+  try {
+    const originalIgnore = '# User-owned rules\nlocal-notes.txt\n';
+    await writeFile(path.join(target, '.gitignore'), originalIgnore);
+
+    const preview = await previewDocumentChanges(target, await documentsFor(target));
+    const ignore = preview.changes.find((change) => change.path === '.gitignore');
+    assert.equal(ignore.status, 'compatible-existing');
+    assert.deepEqual(ignore.permittedActions, ['approve-safe-managed-section']);
+
+    const application = await applyApprovedDocumentChanges(target, preview, { approveSafe: true });
+    assert.equal(application.results.find((result) => result.path === '.gitignore').status, 'modified');
+    const content = await readFile(path.join(target, '.gitignore'), 'utf8');
+    assert.ok(content.startsWith(originalIgnore));
+    assert.ok(managedIgnorePaths(content).includes('.repo-charter/'));
+    const ownership = JSON.parse(await readFile(path.join(target, '.repo-charter', 'ownership.json'), 'utf8'));
+    assert.ok(!ownership.managedArtifacts.some((artifact) => artifact.path === '.gitignore'));
   } finally {
     await rm(target, { recursive: true, force: true });
   }

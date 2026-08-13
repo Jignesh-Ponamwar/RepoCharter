@@ -656,10 +656,18 @@ package contents, and Git-diff/ignore checks were observed. Existing tracked fil
 remain tracked by design; RepoCharter did not run Git untracking commands.
 
 - [x] **8C.4 Add the GitHub Copilot adapter example**: added
-      `examples/.github/copilot-instructions.md` with the exact same repository
-      operating rules as `examples/GEMINI.md`. Verified presence and byte-identical
-      shared content with `node --test tests/docs.test.js`; package curation and
-      unrelated examples remain unchanged.
+      `examples/.github/copilot-instructions.md` with the same repository operating
+      rules as `examples/GEMINI.md`, retaining only its Copilot-specific heading.
+      Verified the shared content with `node --test tests/docs.test.js`; package
+      curation and unrelated examples remain unchanged.
+- [ ] **8C.5 Protect this repository's local planning and agent workspace**: broaden
+      root `.gitignore` coverage for local Claude, Cursor, and Windsurf directories
+      while retaining public `AGENTS.md` and the root Copilot instruction-path rule.
+      Verified `git check-ignore --no-index` excludes every intended planning,
+      adapter, agent-directory, and RepoCharter-state path while leaving `AGENTS.md`
+      public. Blocked from full public-removal completion until the developer explicitly
+      authorizes untracking the already tracked `PLAN.md`, `TODO.md`, `CLAUDE.md`, and
+      `.codex/rules/rules.md`.
 
 ---
 
@@ -672,8 +680,37 @@ remain tracked by design; RepoCharter did not run Git untracking commands.
       clean Windows, macOS, and Linux environments and complete new- and existing-
       repository flows for both `local-planning` and `shared-planning`. Windows-local
       clean packed installation, help, and new-repository flow passed under the
-      superseded single shared-document policy; macOS, Linux, and both corrected
-      visibility workflows remain unobserved.
+      superseded single shared-document policy. In the current Windows_NT / Node
+      v22.15.0 / npm 11.7.0 session, `npm pack --json --pack-destination <temp>`,
+      `npm install --ignore-scripts --no-package-lock --prefix <temp>/harness <tarball>`,
+      installed-binary help, `init`, skill `preview`/approved `apply`, and `check`
+      passed in isolated new Node fixtures for both corrected visibility workflows.
+      Each fixture produced `AGENTS.md`, `PLAN.md`, `TODO.md`, `CLAUDE.md`, and local
+      `.repo-charter/`; the 52-file tarball was inspected. The local fixture proved
+      `.repo-charter/` is ignored and `AGENTS.md` is not; `PLAN.md` is ignored only
+      in `local-planning`. macOS and Linux remain unobserved.
+- [x] **8.7C Verify the packed workflow on an existing Windows repository**: used a
+      clean Windows_NT / Node.js v22.15.0 / npm 11.7.0 Git repository with pre-existing
+      source, `package.json`, and user-owned `.gitignore` content. A tarball installed
+      with `--ignore-scripts` passed installed-binary help plus `init`, skill
+      preview/approved apply, and `check` for both visibility modes. The user ignore
+      prefix and committed source files were preserved; `.repo-charter/` was ignored,
+      `AGENTS.md` was not, and `PLAN.md` was ignored only in `local-planning`.
+- [x] **8.7D Fix existing ignore-policy reconciliation**: added a regression test for
+      a non-empty user-owned `.gitignore`; safe approval now reconciles only the
+      non-overlapping managed block without taking ownership of the whole user file.
+      The test passed red before the fix and green afterward. Re-ran 8.7C successfully
+      in both modes; malformed managed blocks retain their existing blocked behavior.
+      Verified `npm run lint` and `npm test` (46/46).
+- [ ] **8.7A Verify the packed workflow on macOS**: in a clean macOS environment with
+      Node.js 22+, install the packed tarball with `--ignore-scripts`; verify installed
+      binary help plus `init`, skill preview/approved apply, and `check` for new and
+      existing repository fixtures in both visibility modes. Record the exact OS,
+      Node/npm versions, commands, artifact results, and any failures.
+- [ ] **8.7B Verify the packed workflow on Linux**: repeat 8.7A in a clean Linux
+      environment with Node.js 22+ for new and existing repository fixtures in both
+      visibility modes. Record the exact OS, Node/npm versions, commands, artifact
+      results, and any failures.
 - [ ] **8.8 Run the full preview acceptance suite**: verify every release criterion in
       `PLAN.md`, record actual commands and results, and leave failures or unavailable
       environments explicitly blocked. Earlier local lint, 41-test suite, curated pack,
@@ -691,32 +728,73 @@ preview can be published.
 
 ---
 
-## Phase 9: Deferred public repository context
+## Phase 9: Context drift detection and reconciliation
 
-> Goal: After the preview workflow is proven, give developers and agents cloning a
-> repository evidence-backed public context without exposing always-local state or
-> artifacts selected as local under `local-planning`.
+> Goal: After preview acceptance, detect when manual repository changes may have made
+> agent planning context stale, without automatically rewriting durable documents or
+> requiring Git.
 
-- [ ] **9.1 Define the public-context contract**: before implementation, specify the
+- [ ] **9.1 Define the drift contract and safe anchor**: specify `in-sync`,
+      `drift-detected`, `review-required`, `reconciled`, and `anchor-unavailable`
+      outcomes; record only an explicit Git revision when available, safe snapshot
+      digest, applicable plan/ledger hashes, and anchor reason. Exclude raw diffs,
+      source bodies, database content, transcripts, credentials, and secrets.
+- [ ] **9.2 Implement explicit read-only drift checking**: add
+      `repo-charter drift-check [path] [--json]`. Compare safe snapshots in every
+      repository; only after explicit invocation in a Git repository, disclose and run
+      read-only revision/status/changed-path commands. Report committed, uncommitted,
+      untracked, and unreachable-anchor conditions without requiring Git or mutating
+      repository files.
+- [ ] **9.3 Classify affected context and require review**: use existing inspection
+      evidence to mark changed paths as planning-relevant, ordinary, or unknown. Flag
+      schemas, migrations, manifests, agent/planning files, operations configuration,
+      and documented command surfaces for review when observed. Do not infer a semantic
+      database-table rename or add language/ORM parsers in this phase.
+- [ ] **9.4 Reuse approved reconciliation instead of auto-syncing**: when drift is
+      relevant, reinpect only affected safe paths and produce a report directing the
+      agent/developer to acknowledge in-scope changes, preview plan/ledger updates,
+      preserve existing documents, or leave review required. Never automatically write
+      `PLAN.md`, `TODO.md`, source files, or Git state; refresh an anchor only after
+      explicit acknowledgement or approved reconciliation.
+- [ ] **9.5 Add bounded drift fixtures and documentation**: cover non-Git snapshot
+      drift, committed/uncommitted planning-relevant changes, untracked files,
+      unreachable anchors, local/shared planning documents, redacted JSON, repeated
+      no-op checks, and no-write guarantees. Document the command, Git disclosure,
+      review workflow, and explicit exclusions from automatic semantic detection.
+
+**Phase gate: PENDING**: after Phase 8B passes and the developer explicitly advances
+this phase, fixtures must prove accurate read-only drift reports, safe non-Git fallback,
+no raw diff/source persistence, no automatic writes or Git mutation, and explicit
+reconciliation before any planning-document update.
+
+---
+
+## Phase 10: Deferred public repository context
+
+> Goal: After preview and context-drift handling are proven, give developers and
+> agents cloning a repository evidence-backed public context without exposing
+> always-local state or artifacts selected as local under `local-planning`.
+
+- [ ] **10.1 Define the public-context contract**: before implementation, specify the
       approved public paths, source evidence, privacy classification, update ownership,
       stale-content behavior, and links from `AGENTS.md` for repository maps,
       architecture/data-flow references, domain glossaries, command references, and
-      decision records. Do not begin until the Phase 8 preview gate passes and the
-      developer explicitly advances this deferred phase.
-- [ ] **9.2 Prototype evidence-backed repository mapping**: evaluate a bounded,
+      decision records. Do not begin until the Phase 8 preview and Phase 9 drift gates
+      pass and the developer explicitly advances this deferred phase.
+- [ ] **10.2 Prototype evidence-backed repository mapping**: evaluate a bounded,
       explainable repository-map workflow against representative fixtures; record its
       accuracy, update cost, context budget, and usefulness to fresh agents before it
       becomes generated public documentation.
-- [ ] **9.3 Evaluate graph-based context only after a separate design decision**:
+- [ ] **10.3 Evaluate graph-based context only after a separate design decision**:
       define graph source data, node/edge semantics, privacy exclusions, incremental
       update strategy, rendering format, failure behavior, and fresh-agent consumption
       criteria before implementing graph generation or claiming agent-context benefit.
-- [ ] **9.4 Add public-context generation, reconciliation, and evaluation**: only after
-      9.1–9.3 approval, generate or reconcile shareable context under a deliberate
+- [ ] **10.4 Add public-context generation, reconciliation, and evaluation**: only after
+      10.1–10.3 approval, generate or reconcile shareable context under a deliberate
       public path, preserve project-owned documents, validate staleness, and prove
       fresh-agent usefulness without promoting local plans, task ledgers, adapters,
       rules, manifests, or interview details.
 
-**Phase gate: PENDING**: deferred by approved sequencing. Begin only after the preview
-release gate passes and public-context design, privacy, and behavior-evaluation gates
-have observed approval.
+**Phase gate: PENDING**: deferred by approved sequencing. Begin only after the preview,
+drift, public-context design, privacy, and behavior-evaluation gates have observed
+approval.

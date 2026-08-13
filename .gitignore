@@ -16,9 +16,9 @@ TODO.md
 CLAUDE.md
 GEMINI.md
 .github/copilot-instructions.md
-.claude/rules/
-.cursor/rules/
-.windsurf/rules/
+.claude/
+.cursor/
+.windsurf/
 .codex/
 
 # Logs
