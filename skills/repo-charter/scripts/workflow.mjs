@@ -7,7 +7,9 @@ const result = spawnSync(cli, [...cliArguments, 'workflow', ...process.argv.slic
   shell: process.platform === 'win32',
 });
 
-if (result.error && result.error.code === 'ENOENT') {
+const missingCli = result.error?.code === 'ENOENT'
+  || /(?:not recognized as an internal|command not found)/i.test(result.stderr);
+if (missingCli) {
   process.stderr.write('RepoCharter CLI is required. Install it or explicitly run npx repo-charter@0.1.1; npx may download the package.\n');
   process.exitCode = 1;
 } else {
