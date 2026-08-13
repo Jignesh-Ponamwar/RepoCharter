@@ -9,6 +9,8 @@ const requiredDocs = {
   'CONTRIBUTING.md': ['## Requirements', '## Compatibility research and evaluation'],
   'docs/verification-status.md': ['Deferred post-MVP scope', 'npm registry/package identity'],
   'docs/windows-e2e-test.md': ['## 1. Preconditions and isolated harness', '## 5. Verify the installed skill uses the public CLI', 'repo-charter@0.1.5'],
+  'README.md': ['npx repo-charter init', '## One-command start', '## Windows verification'],
+  'LEARNING.md': ['repo-charter@0.1.5', '`workflow preview`', 'fresh-agent behavior evaluations'],
   'examples/initialization-output.example.md': ['fictional, annotated composite', 'merge-required', 'nextTask'],
 };
 

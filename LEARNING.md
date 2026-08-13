@@ -1,9 +1,9 @@
 # RepoCharter: Learning Guide
 
-This guide explains what RepoCharter is intended to become, why it is designed
-this way, and how its major pieces will work together. It is written for learning and
-orientation; [PLAN.md](./PLAN.md) remains the authoritative product and architecture
-contract, while [TODO.md](./TODO.md) remains the authoritative implementation ledger.
+This guide explains RepoCharter's implemented preview, its remaining limits, and the
+architecture behind its workflow. It is written for learning and orientation;
+[PLAN.md](./PLAN.md) remains the authoritative product and architecture contract, while
+[TODO.md](./TODO.md) remains the authoritative implementation ledger.
 
 ## 1. Current state versus intended product
 
@@ -30,13 +30,19 @@ The repository currently contains:
 - Phase 6 primary-source native-surface research, selected-agent adapter planning,
   compatibility diagnostics, and the installable RepoCharter workflow skill; and
 - Phase 7 read-only integrity/document/adapter validation, stale-fact advice,
-  observed-check recording, final reports, and human/JSON exit-code coverage.
+  observed-check recording, final reports, and human/JSON exit-code coverage;
+- Phase 8 Windows-first npm distribution, an installable skill, workspace visibility
+  modes, public package/skill verification evidence, and one-command interactive
+  initialization; and
+- Phase 9 explicit read-only context-drift detection, acknowledgement, and safe
+  reconciliation anchors.
 
-The package is not published and the full setup workflow is not implemented yet. The
-active coding agent still conducts the interview, and public CLI orchestration of an
-approved specification remains planned work. Agent compatibility is not behavior-
-verified for any target. Commands and generated-file examples in this guide describe
-the approved design unless explicitly identified as implemented.
+`repo-charter@0.1.5` is published as Windows-first preview software. A human can begin
+with `npx repo-charter init`, choose the primary agent interactively, then continue the
+agent-led planning conversation. The CLI also exposes stable approved-specification
+preview/application operations for the installed skill. Agent compatibility remains
+behavior-unverified for every target, and macOS/Linux verification remains deferred.
+Where this guide describes later phases, it labels them as future work.
 
 ### What the project will become
 
@@ -466,7 +472,7 @@ Conceptually:
 ```json
 {
   "schemaVersion": 1,
-  "packageVersion": "0.1.0",
+  "packageVersion": "<installed package version>",
   "stage": "inspected",
   "selectedAgents": {
     "primary": "codex",
@@ -485,8 +491,8 @@ secrets, or unnecessary source bodies.
 
 ## 14. Technical implementation walkthrough
 
-This section describes the **planned implementation mechanics**, not code that exists
-in this repository today. It turns the product contract in [PLAN.md](./PLAN.md) into a
+This section explains the implementation mechanics behind the preview. It turns the
+product contract in [PLAN.md](./PLAN.md) into a
 technical model an implementer can follow. Where the plan deliberately leaves a choice
 open—for example ESM versus CommonJS, exact library selection, or internal type
 shapes—this guide names the boundary instead of pretending that choice has been made.
@@ -837,7 +843,8 @@ decisions and observed evidence. The internal generation path classifies missing
 owned-current, owned-modified, compatible-existing, merge-required, and blocked
 artifacts; produces human/JSON-safe preview summaries; requires explicit per-file
 preserve or reconciled-content decisions for conflicts; and atomically applies only
-approved changes. The public CLI does not yet accept an approved specification.
+approved changes. The CLI exposes stable `workflow preview` and `workflow apply`
+operations; the installed skill calls that contract rather than duplicating it.
 
 ### Phase 6: agent adapters and skill — completed
 
@@ -862,10 +869,10 @@ statuses, observed checks, blockers, warnings, and the first unchecked task.
 ### Phase 8: preview distribution — partially verified
 
 Lifecycle, generated-file, support-status, contribution, verification-status, and
-realistic example documentation are present. The curated packed artifact and clean
-Windows-local installation were observed. Authenticated npm name eligibility, clean
-macOS/Linux installation, fresh-agent behavior evaluations, and explicit publication
-authorization remain blocked; Phase 8 is not complete.
+realistic example documentation are present. `repo-charter@0.1.5` is published, and
+Windows public-package plus installed-skill workflows have observed evidence. Fresh
+macOS/Linux installation and fresh-agent behavior evaluations remain deferred or
+incomplete; the final preview-acceptance gate is not complete.
 
 See [TODO.md](./TODO.md) for the exact tasks and current progress.
 

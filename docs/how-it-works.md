@@ -29,7 +29,10 @@ project truth.
 ## Manual CLI and skill flow
 
 ```bash
-# Start a bounded inspection/session.
+# A human terminal user starts with one command and chooses the primary agent when prompted.
+npx repo-charter init
+
+# JSON/non-interactive orchestration supplies the primary agent explicitly.
 repo-charter init ../target --primary-agent codex --json
 
 # Resume after an interruption or changed files.

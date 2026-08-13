@@ -188,8 +188,9 @@ Use the installed `.cmd` path in the examples below when the CLI is project-loca
 
 | Command | Effect |
 | --- | --- |
-| `repo-charter init [path] --primary-agent <agent>` | Inspect a repository and create or reuse a safe session. |
-| `repo-charter init [path] --dry-run --primary-agent <agent>` | Calculate base initialization without writing. |
+| `repo-charter init [path]` | Inspect a repository and create or reuse a safe session. A human terminal user is prompted to choose the primary agent for a new session. |
+| `repo-charter init [path] --dry-run` | Calculate base initialization without writing; a human terminal user can still choose the primary agent. |
+| `repo-charter init [path] --primary-agent <agent> --json` | Deterministic non-interactive/session-orchestration form; JSON and non-TTY callers must supply the primary agent. |
 | `repo-charter resume [path]` | Reinspect changed safe paths and resume an incomplete session. |
 | `repo-charter check [path] --json` | Validate local RepoCharter state without writing. |
 | `repo-charter workflow preview <path> <spec.json> --json` | Produce the deterministic document/change preview used by the skill. |
